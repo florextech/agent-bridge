@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Badge, EmptyState, Heading, Spinner, Stat, Status, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Text } from '@florexlabs/ui';
-import { ListChecks, Pulse, XCircle } from '@phosphor-icons/react';
+import { ListChecks, Pulse, XCircle, Trash } from '@phosphor-icons/react';
 import type { Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 
@@ -19,6 +19,11 @@ export default function SessionsPage() {
   }, []);
 
   const active = sessions.filter((s) => s.status === 'active').length;
+
+  const remove = async (id: string) => {
+    await bridgeApi.deleteSession(id);
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+  };
 
   if (loading) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
   if (error) return <Text variant="danger">{error}</Text>;
@@ -66,6 +71,7 @@ export default function SessionsPage() {
                 <TableHead>Channel</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Updated</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,6 +84,11 @@ export default function SessionsPage() {
                   <TableCell><span className="flx-pill">{s.channelType}</span></TableCell>
                   <TableCell><Status value={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Status></TableCell>
                   <TableCell><Text variant="muted" size="xs">{new Date(s.updatedAt).toLocaleString()}</Text></TableCell>
+                  <TableCell>
+                    <button onClick={() => remove(s.id)} className="p-2 rounded-lg hover:bg-(--surface-muted) transition-colors text-(--muted) hover:text-(--danger)">
+                      <Trash size={16} />
+                    </button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -28,6 +28,8 @@ export const bridgeApi = {
   getResponses: (sessionId: string) => api<ChannelResponse[]>(`/agent-sessions/${sessionId}/responses`),
   markRead: (sessionId: string) =>
     api<{ ok: true }>(`/agent-sessions/${sessionId}/mark-read`, { method: 'POST' }),
+  deleteSession: (sessionId: string) =>
+    api<{ ok: true }>(`/agent-sessions/${sessionId}`, { method: 'DELETE' }),
   getTelegramUsers: () => api<TelegramUser[]>('/telegram/users'),
   toggleTelegramAuth: (chatId: string) =>
     api<TelegramUser>(`/telegram/users/${chatId}/authorize`, { method: 'POST' }),

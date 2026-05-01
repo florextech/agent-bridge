@@ -48,6 +48,13 @@ export class SessionsService {
     db.prepare(`UPDATE channel_responses SET read = 1 WHERE session_id = ? AND read = 0`).run(sessionId);
   }
 
+  remove(sessionId: string): void {
+    const db = getDb();
+    db.prepare(`DELETE FROM channel_responses WHERE session_id = ?`).run(sessionId);
+    db.prepare(`DELETE FROM agent_events WHERE session_id = ?`).run(sessionId);
+    db.prepare(`DELETE FROM sessions WHERE id = ?`).run(sessionId);
+  }
+
   private getResponseById(id: string): ChannelResponse | null {
     const db = getDb();
     const row = db.prepare(`SELECT * FROM channel_responses WHERE id = ?`).get(id) as RawResponse | undefined;

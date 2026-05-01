@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import type { ChannelResponse, CreateSessionDto, Session } from '@agent-bridge/core';
 import { SessionsService } from './sessions.service';
 
@@ -29,6 +29,12 @@ export class SessionsController {
   @Post(':sessionId/mark-read')
   markRead(@Param('sessionId') sessionId: string): { ok: true } {
     this.sessions.markRead(sessionId);
+    return { ok: true };
+  }
+
+  @Delete(':sessionId')
+  remove(@Param('sessionId') sessionId: string): { ok: true } {
+    this.sessions.remove(sessionId);
     return { ok: true };
   }
 }

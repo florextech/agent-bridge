@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { DeliveryStatus } from '@agent-bridge/core';
 import type { AgentEvent, CreateAgentEventDto } from '@agent-bridge/core';
 import { EventsService } from './events.service';
@@ -12,6 +12,11 @@ export class EventsController {
     private readonly sessions: SessionsService,
     private readonly providers: ProviderRegistry,
   ) {}
+
+  @Get()
+  findBySession(@Query('sessionId') sessionId: string): AgentEvent[] {
+    return this.events.findBySession(sessionId);
+  }
 
   @Post()
   async create(@Body() dto: CreateAgentEventDto): Promise<AgentEvent> {
