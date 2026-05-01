@@ -10,21 +10,16 @@ export function LocaleSwitcher() {
     setLocale(document.cookie.match(/locale=(\w+)/)?.[1] || 'en');
   }, []);
 
+  if (!locale) return null;
+
   const toggle = () => {
     const next = locale === 'en' ? 'es' : 'en';
     document.cookie = `locale=${next};path=/;max-age=31536000;SameSite=Lax`;
-    setLocale(next);
-    // Full navigation forces server to re-read cookie
-    setTimeout(() => { window.location.href = window.location.pathname; }, 50);
+    window.location.replace(window.location.pathname);
   };
 
-  if (!locale) return null;
-
   return (
-    <button
-      onClick={toggle}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-(--muted) hover:text-(--foreground) hover:bg-(--surface-muted) transition-colors"
-    >
+    <button onClick={toggle} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-(--muted) hover:text-(--foreground) hover:bg-(--surface-muted) transition-colors">
       <Globe size={14} weight="duotone" />
       {locale === 'en' ? 'Español' : 'English'}
     </button>
