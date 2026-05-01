@@ -1,2 +1,7 @@
 import { defineConfig } from 'vitest/config';
-export default defineConfig({ test: { globals: true } });
+import swc from 'unplugin-swc';
+
+export default defineConfig({
+  plugins: [swc.vite({ module: { type: 'es6' } })],
+  test: { globals: true },
+});
