@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Badge, EmptyState, Heading, Spinner, Stat, Status, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Text } from '@florexlabs/ui';
-import { ListChecks, Pulse, XCircle, Trash } from '@phosphor-icons/react';
+import { EmptyState, Heading, Spinner, Status, Text } from '@florexlabs/ui';
+import { ListChecks, Pulse, XCircle, Trash, ArrowRight } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import type { Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
@@ -27,76 +27,74 @@ export default function SessionsPage() {
     setSessions((prev) => prev.filter((s) => s.id !== id));
   };
 
-  if (loading) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
+  if (loading) return <div className="flex items-center justify-center h-40"><Spinner className="size-5" /></div>;
   if (error) return <Text variant="danger">{error}</Text>;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
+      {/* Header */}
       <div>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">{t('eyebrow')}</p>
         <Heading as="h2" size="lg">{t('title')}</Heading>
         <Text variant="muted" size="sm">{t('subtitle')}</Text>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="flx-card flx-card-hover flex items-start gap-4">
-          <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
-            <ListChecks size={22} className="text-(--brand-600)" weight="duotone" />
-          </div>
-          <Stat label={t('totalSessions')} value={String(sessions.length)} />
-        </div>
-        <div className="flx-card flx-card-hover flex items-start gap-4">
-          <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
-            <Pulse size={22} className="text-(--brand-600)" weight="duotone" />
-          </div>
-          <Stat label={t('active')} value={String(active)} trend="up" />
-        </div>
-        <div className="flx-card flx-card-hover flex items-start gap-4">
-          <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
-            <XCircle size={22} className="text-(--muted)" weight="duotone" />
-          </div>
-          <Stat label={t('closed')} value={String(sessions.length - active)} trend="neutral" />
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard icon={<ListChecks size={18} />} label={t('totalSessions')} value={sessions.length} />
+        <StatCard icon={<Pulse size={18} />} label={t('active')} value={active} accent />
+        <StatCard icon={<XCircle size={18} />} label={t('closed')} value={sessions.length - active} />
       </div>
 
+      {/* Sessions list */}
       {sessions.length === 0 ? (
-        <div className="flx-card p-10">
+        <div className="flx-card py-16">
           <EmptyState title={t('noSessions')} description={t('noSessionsDesc')} />
         </div>
       ) : (
-        <div className="flx-card p-0 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('project')}</TableHead>
-                <TableHead>{t('agent')}</TableHead>
-                <TableHead>{t('channel')}</TableHead>
-                <TableHead>{t('status')}</TableHead>
-                <TableHead>{t('updated')}</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sessions.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>
-                    <a href={`/sessions/${s.id}`} className="text-(--brand-600) hover:text-(--brand-700) hover:underline font-medium">{s.projectName}</a>
-                  </TableCell>
-                  <TableCell><Text size="sm">{s.agentName}</Text></TableCell>
-                  <TableCell><span className="flx-pill">{s.channelType}</span></TableCell>
-                  <TableCell><Status value={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Status></TableCell>
-                  <TableCell><Text variant="muted" size="xs">{new Date(s.updatedAt).toLocaleString()}</Text></TableCell>
-                  <TableCell>
-                    <button onClick={() => remove(s.id)} className="p-2 rounded-lg hover:bg-(--surface-muted) transition-colors text-(--muted) hover:text-(--danger)">
-                      <Trash size={16} />
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="flex flex-col gap-2">
+          {sessions.map((s) => (
+            <a
+              key={s.id}
+              href={`/sessions/${s.id}`}
+              className="flx-card flx-card-hover p-4 flex items-center gap-4 group cursor-pointer"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-medium text-sm text-(--foreground)">{s.projectName}</span>
+                  <span className="flx-pill text-[10px] py-0">{s.channelType}</span>
+                  <Status value={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Status>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-(--muted)">
+                  <span>{t('agent')}: {s.agentName}</span>
+                  <span>·</span>
+                  <span>{new Date(s.updatedAt).toLocaleString()}</span>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.preventDefault(); remove(s.id); }}
+                className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgb(239_68_68/0.1)] transition-all text-(--muted) hover:text-(--danger)"
+              >
+                <Trash size={15} />
+              </button>
+              <ArrowRight size={16} className="text-(--muted) opacity-0 group-hover:opacity-60 transition-opacity" />
+            </a>
+          ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: boolean }) {
+  return (
+    <div className="rounded-xl border border-(--border) bg-(--surface) p-4 flex items-center gap-3">
+      <div className={`size-9 rounded-lg flex items-center justify-center ${accent ? 'bg-[rgb(189_241_70/0.1)] text-(--brand-600)' : 'bg-(--surface-muted) text-(--muted)'}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-semibold font-display text-(--foreground)">{value}</p>
+        <p className="text-[11px] text-(--muted)">{label}</p>
+      </div>
     </div>
   );
 }
