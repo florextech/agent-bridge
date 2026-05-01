@@ -20,6 +20,7 @@ export enum ChannelType {
   WhatsApp = 'whatsapp',
   Discord = 'discord',
   Slack = 'slack',
+  Email = 'email',
 }
 
 export enum SessionStatus {
