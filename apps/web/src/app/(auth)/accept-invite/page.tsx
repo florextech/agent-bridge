@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { UserPlus } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
+import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
 
 function AcceptInviteForm() {
@@ -51,9 +52,7 @@ function AcceptInviteForm() {
   return (
     <><div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
-        <div className="size-8 rounded-lg bg-(--brand-600) flex items-center justify-center">
-          <UserPlus size={18} weight="bold" className="text-[#111513]" />
-        </div>
+        <Logo size="sm" />
         <Heading as="h1" size="md">{t('acceptInvite')}</Heading>
       </div>
       <Text variant="muted" size="sm" className="mb-6">{t('acceptDesc')}</Text>

@@ -13,6 +13,7 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
 }));
 vi.mock('@phosphor-icons/react', () => ({ Shield: () => React.createElement('span') }));
+vi.mock('@/components/Logo', () => ({ Logo: () => React.createElement('span', null, 'logo') }));
 vi.mock('@florexlabs/ui', async () => {
   const R = await import('react');
   const c = (name: string) => R.forwardRef(({ children, ...props }: any, ref: any) =>

@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { Shield } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
+import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
 
 export default function SetupPage() {
@@ -41,9 +42,7 @@ export default function SetupPage() {
   return (
     <><div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
-        <div className="size-8 rounded-lg bg-(--brand-600) flex items-center justify-center">
-          <Shield size={18} weight="bold" className="text-[#111513]" />
-        </div>
+        <Logo size="sm" />
         <Heading as="h1" size="md">{t('setupAdmin')}</Heading>
       </div>
       <Text variant="muted" size="sm" className="mb-6">{t('setupDesc')}</Text>

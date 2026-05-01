@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { useTranslations } from 'next-intl';
+import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
 
 export default function LoginPage() {
@@ -35,7 +36,7 @@ export default function LoginPage() {
   return (
     <><div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
-        <span className="size-8 rounded-lg bg-(--brand-600) flex items-center justify-center text-[#111513] text-sm font-bold">AB</span>
+        <Logo size="sm" />
         <Heading as="h1" size="md">{tc('appName')}</Heading>
       </div>
       <Text variant="muted" size="sm" className="mb-6">{t('signInDesc')}</Text>
