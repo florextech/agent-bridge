@@ -9,17 +9,24 @@
     "dev:web": "pnpm --filter @agent-bridge/web dev",
     "dev": "pnpm run dev:api & pnpm run dev:web",
     "lint": "pnpm -r lint",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "test": "vitest run"
   },
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@nestjs/core", "@tailwindcss/oxide", "sharp", "@prisma/client"]
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@tailwindcss/oxide",
+      "sharp",
+      "@prisma/client"
+    ]
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "3.1.4"
   }
 }
