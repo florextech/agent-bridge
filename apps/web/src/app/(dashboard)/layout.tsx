@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useI18n } from '@/lib/i18n';
 import { usePathname } from 'next/navigation';
 import { ListChecks, Gear } from '@phosphor-icons/react';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 }
 
 function Sidebar() {
-  const t = useTranslations();
+  const { t } = useI18n();
   const pathname = usePathname();
 
   const links = [

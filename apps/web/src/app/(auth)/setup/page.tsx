@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { Shield } from '@phosphor-icons/react';
-import { useTranslations } from 'next-intl';
+import { useI18n } from '@/lib/i18n';
 import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
 
 export default function SetupPage() {
-  const t = useTranslations('auth');
+  const { t } = useI18n();
   const [form, setForm] = useState({ email: '', name: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -43,24 +43,24 @@ export default function SetupPage() {
     <><div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
         <Logo size="sm" />
-        <Heading as="h1" size="md">{t('setupAdmin')}</Heading>
+        <Heading as="h1" size="md">{t('auth.setupAdmin')}</Heading>
       </div>
-      <Text variant="muted" size="sm" className="mb-6">{t('setupDesc')}</Text>
+      <Text variant="muted" size="sm" className="mb-6">{t('auth.setupDesc')}</Text>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">{t('name')}</Label>
-          <Input id="name" value={form.name} onChange={set('name')} autoFocus />
+          <Label htmlFor="name">{t('auth.name')}</Label>
+          <Input id="name" value={form.name} onChange={set('auth.name')} autoFocus />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">{t('email')}</Label>
-          <Input id="email" type="email" value={form.email} onChange={set('email')} />
+          <Label htmlFor="email">{t('auth.email')}</Label>
+          <Input id="email" type="email" value={form.email} onChange={set('auth.email')} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">{t('password')}</Label>
-          <Input id="password" type="password" value={form.password} onChange={set('password')} />
+          <Label htmlFor="password">{t('auth.password')}</Label>
+          <Input id="password" type="password" value={form.password} onChange={set('auth.password')} />
         </div>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Button type="submit">{t('createAdmin')}</Button>
+        <Button type="submit">{t('auth.createAdmin')}</Button>
       </form>
     </div></>
   );

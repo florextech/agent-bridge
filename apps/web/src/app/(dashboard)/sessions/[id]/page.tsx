@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { use } from 'react';
 import { Badge, DataList, DataListItem, EmptyState, Heading, Spinner, Status, Text, Timeline, TimelineItem } from '@florexlabs/ui';
 import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText, Copy, Check } from '@phosphor-icons/react';
-import { useTranslations } from 'next-intl';
+import { useI18n } from '@/lib/i18n';
 import type { AgentEvent, ChannelResponse, Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 import type { ReactNode } from 'react';
@@ -21,7 +21,7 @@ const EVENT_ICONS: Record<string, ReactNode> = {
 
 export default function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const t = useTranslations('session');
+  const { t } = useI18n();
   const [session, setSession] = useState<Session | null>(null);
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [responses, setResponses] = useState<ChannelResponse[]>([]);
@@ -40,28 +40,28 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     <div className="flex flex-col gap-8">
       <div>
         <a href="/" className="inline-flex items-center gap-1.5 text-(--muted) text-sm hover:text-(--foreground) transition-colors mb-2">
-          <ArrowLeft size={14} /> {t('backToSessions')}
+          <ArrowLeft size={14} /> {t('session.backToSessions')}
         </a>
         <Heading as="h2" size="lg">{session.projectName}</Heading>
         <Text variant="muted" size="sm">Agent: {session.agentName}</Text>
       </div>
 
       <div className="flx-card">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('sessionInfo')}</p>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('session.sessionInfo')}</p>
         <DataList>
           <DataListItem label="Channel"><span className="flx-pill">{session.channelType}</span></DataListItem>
           <DataListItem label="Status"><Status value={session.status === 'active' ? 'success' : 'neutral'}>{session.status}</Status></DataListItem>
-          <DataListItem label={t('created')}>{new Date(session.createdAt).toLocaleString()}</DataListItem>
-          <DataListItem label={t('updated')}>{new Date(session.updatedAt).toLocaleString()}</DataListItem>
+          <DataListItem label={t('session.created')}>{new Date(session.createdAt).toLocaleString()}</DataListItem>
+          <DataListItem label={t('session.updated')}>{new Date(session.updatedAt).toLocaleString()}</DataListItem>
         </DataList>
       </div>
 
       <IntegrationBlock sessionId={session.id} />
 
       <div className="flx-card">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('timeline')}</p>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('session.timeline')}</p>
         {events.length === 0 && responses.length === 0 ? (
-          <EmptyState title={t('noActivity')} description={t('noActivityDesc')} />
+          <EmptyState title={t('session.noActivity')} description={t('session.noActivityDesc')} />
         ) : (
           <Timeline>
             {[
@@ -79,11 +79,11 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </TimelineItem>
                 ) : (
-                  <TimelineItem key={item.id} title={t('userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
+                  <TimelineItem key={item.id} title={t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
                     <div className="flex flex-col gap-1">
                       <Text size="sm">{item.r.content}</Text>
                       <div className="flex items-center gap-2">
-                        {!item.r.read && <Badge tone="warning">{t('unread')}</Badge>}
+                        {!item.r.read && <Badge tone="warning">{t('session.unread')}</Badge>}
                         <Text variant="muted" size="xs">{new Date(item.r.createdAt).toLocaleString()}</Text>
                       </div>
                     </div>
@@ -98,7 +98,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 }
 
 function IntegrationBlock({ sessionId }: { sessionId: string }) {
-  const t = useTranslations('session');
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState('');
 
@@ -128,12 +128,12 @@ After reading: curl -X POST ${apiUrl}/agent-sessions/${sessionId}/mark-read`;
   return (
     <div className="flx-card">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">{t('agentInstructions')}</p>
-        <span className="text-(--muted) text-xs">{open ? `▲ ${t('hide')}` : `▼ ${t('show')}`}</span>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">{t('session.agentInstructions')}</p>
+        <span className="text-(--muted) text-xs">{open ? `▲ ${t('session.hide')}` : `▼ ${t('session.show')}`}</span>
       </button>
       {open && (
         <div className="mt-4 flex flex-col gap-3">
-          <Text variant="muted" size="xs">{t('instructionsDesc')}</Text>
+          <Text variant="muted" size="xs">{t('session.instructionsDesc')}</Text>
           <div className="relative">
             <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{agentPrompt}</pre>
             <button onClick={() => copy('prompt', agentPrompt)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">

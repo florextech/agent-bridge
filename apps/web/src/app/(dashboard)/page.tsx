@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { EmptyState, Heading, Spinner, Status, Text } from '@florexlabs/ui';
 import { ListChecks, Pulse, XCircle, Trash, ArrowRight } from '@phosphor-icons/react';
-import { useTranslations } from 'next-intl';
+import { useI18n } from '@/lib/i18n';
 import type { Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 
 export default function SessionsPage() {
-  const t = useTranslations('dashboard');
+  const { t } = useI18n();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,21 +34,21 @@ export default function SessionsPage() {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <Heading as="h2" size="lg">{t('title')}</Heading>
-        <Text variant="muted" size="sm">{t('subtitle')}</Text>
+        <Heading as="h2" size="lg">{t('dashboard.title')}</Heading>
+        <Text variant="muted" size="sm">{t('dashboard.subtitle')}</Text>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <StatCard icon={<ListChecks size={18} />} label={t('totalSessions')} value={sessions.length} />
-        <StatCard icon={<Pulse size={18} />} label={t('active')} value={active} accent />
-        <StatCard icon={<XCircle size={18} />} label={t('closed')} value={sessions.length - active} />
+        <StatCard icon={<ListChecks size={18} />} label={t('dashboard.totalSessions')} value={sessions.length} />
+        <StatCard icon={<Pulse size={18} />} label={t('dashboard.active')} value={active} accent />
+        <StatCard icon={<XCircle size={18} />} label={t('dashboard.closed')} value={sessions.length - active} />
       </div>
 
       {/* Sessions list */}
       {sessions.length === 0 ? (
         <div className="flx-card py-16">
-          <EmptyState title={t('noSessions')} description={t('noSessionsDesc')} />
+          <EmptyState title={t('dashboard.noSessions')} description={t('dashboard.noSessionsDesc')} />
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -65,7 +65,7 @@ export default function SessionsPage() {
                   <Status value={s.status === 'active' ? 'success' : 'neutral'}>{s.status}</Status>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-(--muted)">
-                  <span>{t('agent')}: {s.agentName}</span>
+                  <span>{t('dashboard.agent')}: {s.agentName}</span>
                   <span>·</span>
                   <span>{new Date(s.updatedAt).toLocaleString()}</span>
                 </div>

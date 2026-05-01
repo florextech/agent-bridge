@@ -1,22 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Globe } from '@phosphor-icons/react';
+import { useI18n } from '@/lib/i18n';
 
 export function LocaleSwitcher() {
-  const [locale, setLocale] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLocale(document.cookie.match(/locale=(\w+)/)?.[1] || 'en');
-  }, []);
-
-  if (!locale) return null;
-
-  const toggle = () => {
-    const next = locale === 'en' ? 'es' : 'en';
-    document.cookie = `locale=${next};path=/;max-age=31536000;SameSite=Lax`;
-    window.location.replace(window.location.pathname);
-  };
+  const { locale, toggle } = useI18n();
 
   return (
     <button onClick={toggle} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-(--muted) hover:text-(--foreground) hover:bg-(--surface-muted) transition-colors">

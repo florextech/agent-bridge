@@ -5,14 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { UserPlus } from '@phosphor-icons/react';
-import { useTranslations } from 'next-intl';
+import { useI18n } from '@/lib/i18n';
 import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
 
 function AcceptInviteForm() {
-  const t = useTranslations('auth');
+  const { t } = useI18n();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token') || '';
+  const token = searchParams.get('auth.token') || '';
   const [form, setForm] = useState({ name: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -53,20 +53,20 @@ function AcceptInviteForm() {
     <><div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
         <Logo size="sm" />
-        <Heading as="h1" size="md">{t('acceptInvite')}</Heading>
+        <Heading as="h1" size="md">{t('auth.acceptInvite')}</Heading>
       </div>
-      <Text variant="muted" size="sm" className="mb-6">{t('acceptDesc')}</Text>
+      <Text variant="muted" size="sm" className="mb-6">{t('auth.acceptDesc')}</Text>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">{t('name')}</Label>
-          <Input id="name" value={form.name} onChange={set('name')} autoFocus />
+          <Label htmlFor="name">{t('auth.name')}</Label>
+          <Input id="name" value={form.name} onChange={set('auth.name')} autoFocus />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">{t('password')}</Label>
-          <Input id="password" type="password" value={form.password} onChange={set('password')} />
+          <Label htmlFor="password">{t('auth.password')}</Label>
+          <Input id="password" type="password" value={form.password} onChange={set('auth.password')} />
         </div>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Button type="submit">{t('accept')}</Button>
+        <Button type="submit">{t('auth.accept')}</Button>
       </form>
     </div></>
   );

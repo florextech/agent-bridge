@@ -6,8 +6,8 @@ vi.mock('next-auth/react', () => ({ signIn: vi.fn() }));
 vi.mock('@/lib/api', () => ({
   bridgeApi: { getUserCount: vi.fn().mockResolvedValue({ count: 1 }) },
 }));
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => key,
+vi.mock('@/lib/i18n', () => ({
+  useI18n: () => ({ t: (k: string) => k, locale: 'en', toggle: () => {} }),
 }));
 vi.mock('@/components/Logo', () => ({ Logo: () => React.createElement('span', null, 'logo') }));
 vi.mock('@florexlabs/ui', async () => {
