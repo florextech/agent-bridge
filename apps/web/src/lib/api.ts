@@ -35,4 +35,8 @@ export const bridgeApi = {
     api<TelegramUser>(`/telegram/users/${chatId}/authorize`, { method: 'POST' }),
   removeTelegramUser: (chatId: string) =>
     api<{ ok: true }>(`/telegram/users/${chatId}`, { method: 'DELETE' }),
+  setupTelegram: (botToken: string) =>
+    api<{ ok: boolean; botUsername?: string; error?: string }>('/telegram/setup', { method: 'POST', body: JSON.stringify({ botToken }) }),
+  getTelegramStatus: () =>
+    api<{ connected: boolean; botUsername: string | null }>('/telegram/status'),
 };

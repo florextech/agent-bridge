@@ -9,37 +9,24 @@ import type { TelegramUser } from '@/lib/api';
 
 export default function SettingsPage() {
   const [botToken, setBotToken] = useState('');
-  const [botUsername, setBotUsername] = useState('');
+  const [botUsername, setBotUsername] = useState<string | null>(null);
   const [users, setUsers] = useState<TelegramUser[]>([]);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     bridgeApi.getTelegramUsers().then(setUsers).catch(() => {});
+    bridgeApi.getTelegramStatus().then((s) => { if (s.botUsername) setBotUsername(s.botUsername); }).catch(() => {});
   }, []);
 
-  const webhookUrl = typeof window !== 'undefined'
-    ? `${window.location.origin.replace(':3000', ':3001')}/telegram/webhook`
-    : '';
-
-  const setupWebhook = async () => {
+  const setupBot = async () => {
     if (!botToken) return setResult({ ok: false, msg: 'Enter your bot token first' });
-    try {
-      // Get bot info to show username
-      const infoRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
-      const info = await infoRes.json() as { ok: boolean; result?: { username: string } };
-      if (info.ok && info.result) setBotUsername(info.result.username);
-
-      // Set webhook
-      const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
-      const data = await res.json() as { ok: boolean; description?: string };
-      if (data.ok) {
-        setResult({ ok: true, msg: `Webhook set! Users can now link by messaging @${info.result?.username || 'your bot'}` });
-      } else {
-        setResult({ ok: false, msg: data.description || 'Failed to set webhook' });
-      }
-    } catch (e) {
-      setResult({ ok: false, msg: (e as Error).message });
+    const res = await bridgeApi.setupTelegram(botToken);
+    if (res.ok && res.botUsername) {
+      setBotUsername(res.botUsername);
+      setResult({ ok: true, msg: `Connected to @${res.botUsername}! Share the link below.` });
+    } else {
+      setResult({ ok: false, msg: res.error || 'Failed to connect' });
     }
   };
 
@@ -69,7 +56,7 @@ export default function SettingsPage() {
         <Text variant="muted" size="sm">Connect your bot and manage who receives notifications.</Text>
       </div>
 
-      {/* Step 1: Bot Token + Webhook */}
+      {/* Step 1: Connect bot */}
       <div className="flx-card">
         <div className="flex items-center gap-3 mb-6">
           <div className="size-10 rounded-xl bg-[rgb(0_136_204/0.15)] flex items-center justify-center">
@@ -80,13 +67,12 @@ export default function SettingsPage() {
             <Text variant="muted" size="xs">Paste your bot token from @BotFather</Text>
           </div>
         </div>
-
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="botToken">Bot Token</Label>
             <Input id="botToken" type="password" placeholder="123456:ABC-DEF..." value={botToken} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBotToken(e.target.value)} />
           </div>
-          <Button onClick={setupWebhook}>Connect Bot</Button>
+          <Button onClick={setupBot}>{botUsername ? 'Reconnect' : 'Connect Bot'}</Button>
           {result && <Alert variant={result.ok ? 'success' : 'danger'}>{result.msg}</Alert>}
         </div>
       </div>
@@ -95,7 +81,7 @@ export default function SettingsPage() {
       {botUsername && (
         <div className="flx-card">
           <p className="font-display font-semibold mb-2">2. Share Link</p>
-          <Text variant="muted" size="sm" className="mb-4">Send this link to anyone who should receive notifications. They just click it and press Start.</Text>
+          <Text variant="muted" size="sm" className="mb-4">Anyone who clicks this link and presses Start will be auto-linked.</Text>
           <div className="flex items-center gap-2 p-3 rounded-xl bg-(--surface-muted) border border-(--border)">
             <code className="flex-1 text-sm text-(--brand-600)">https://t.me/{botUsername}</code>
             <button onClick={copyLink} className="p-2 rounded-lg hover:bg-(--surface) transition-colors text-(--muted) hover:text-(--foreground)">
@@ -105,18 +91,17 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Step 3: Authorized users */}
+      {/* Step 3: Users */}
       <div className="flx-card">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="font-display font-semibold">{botUsername ? '3. ' : ''}Authorized Users</p>
             <Text variant="muted" size="xs">{users.length} user(s) linked</Text>
           </div>
-          <Badge tone="brand">{users.filter((u) => u.authorized).length} active</Badge>
+          {users.length > 0 && <Badge tone="brand">{users.filter((u) => u.authorized).length} active</Badge>}
         </div>
-
         {users.length === 0 ? (
-          <Text variant="muted" size="sm">No users linked yet. Connect your bot and share the link above.</Text>
+          <Text variant="muted" size="sm">No users linked yet. Connect your bot and share the link.</Text>
         ) : (
           <div className="flex flex-col gap-2">
             {users.map((u) => (
@@ -138,29 +123,32 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Quick session create */}
-      <div className="flx-card">
-        <p className="font-display font-semibold mb-2">Quick Session</p>
-        <Text variant="muted" size="sm" className="mb-4">Create a session that notifies all authorized users.</Text>
-        <QuickSession botToken={botToken} onCreated={() => setResult({ ok: true, msg: 'Session created!' })} />
-      </div>
+      {/* Quick session */}
+      {botUsername && (
+        <div className="flx-card">
+          <p className="font-display font-semibold mb-2">Quick Session</p>
+          <Text variant="muted" size="sm" className="mb-4">Create a session that notifies all authorized users.</Text>
+          <QuickSession botToken={botToken} />
+        </div>
+      )}
     </div>
   );
 }
 
-function QuickSession({ botToken, onCreated }: { botToken: string; onCreated: () => void }) {
+function QuickSession({ botToken }: { botToken: string }) {
   const [form, setForm] = useState({ projectName: '', agentName: '' });
+  const [msg, setMsg] = useState('');
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const create = async () => {
-    await bridgeApi.createSession({
+    const s = await bridgeApi.createSession({
       projectName: form.projectName,
       agentName: form.agentName,
       channelType: ChannelType.Telegram,
       channelConfig: { botToken },
     });
-    onCreated();
+    setMsg(`Created: ${s.id}`);
   };
 
   return (
@@ -176,6 +164,7 @@ function QuickSession({ botToken, onCreated }: { botToken: string; onCreated: ()
         </div>
       </div>
       <Button onClick={create}>Create Session</Button>
+      {msg && <Alert variant="success">{msg}</Alert>}
     </div>
   );
 }
