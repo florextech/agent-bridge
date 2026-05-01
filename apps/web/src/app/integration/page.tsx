@@ -2,28 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CodeBlock, CopyCommand, Heading, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@florexlabs/ui';
 
-const CURL_CREATE_SESSION = `curl -X POST http://localhost:3001/agent-sessions \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "projectName": "my-project",
-    "agentName": "codex",
-    "channelType": "telegram",
-    "channelConfig": {
-      "botToken": "YOUR_BOT_TOKEN",
-      "chatId": "YOUR_CHAT_ID"
-    }
-  }'`;
-
-const CURL_SEND_EVENT = `curl -X POST http://localhost:3001/agent-events \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "sessionId": "SESSION_ID",
-    "type": "task_completed",
-    "payload": { "summary": "Refactored auth module" }
-  }'`;
-
-const CURL_GET_RESPONSES = `curl http://localhost:3001/agent-sessions/SESSION_ID/responses`;
-
 const SDK_EXAMPLE = `import { AgentBridgeClient } from '@agent-bridge/sdk';
 import { AgentEventType } from '@agent-bridge/core';
 
@@ -40,16 +18,39 @@ await bridge.sendEvent({
 
 // Check for responses
 const responses = await bridge.getResponses('SESSION_ID');
-console.log(responses);
 
 // Mark all responses as read
 await bridge.markRead('SESSION_ID');`;
 
+const CURL_CREATE = `curl -X POST http://localhost:3001/agent-sessions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "projectName": "my-project",
+    "agentName": "codex",
+    "channelType": "telegram",
+    "channelConfig": {
+      "botToken": "YOUR_BOT_TOKEN",
+      "chatId": "YOUR_CHAT_ID"
+    }
+  }'`;
+
+const CURL_EVENT = `curl -X POST http://localhost:3001/agent-events \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "sessionId": "SESSION_ID",
+    "type": "task_completed",
+    "payload": { "summary": "Refactored auth module" }
+  }'`;
+
+const CURL_RESPONSES = `curl http://localhost:3001/agent-sessions/SESSION_ID/responses`;
+
 export default function IntegrationPage() {
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
-      <Heading as="h2">Integration Guide</Heading>
-      <Text className="text-neutral-400">Connect your code agent to Agent Bridge using curl or the TypeScript SDK.</Text>
+      <div>
+        <Heading as="h2" size="lg">Integration Guide</Heading>
+        <Text variant="muted">Connect your code agent to Agent Bridge using curl or the TypeScript SDK.</Text>
+      </div>
 
       <Card>
         <CardHeader><CardTitle>Install SDK</CardTitle></CardHeader>
@@ -68,7 +69,7 @@ export default function IntegrationPage() {
           <Card>
             <CardHeader><CardTitle>SDK Usage</CardTitle></CardHeader>
             <CardContent>
-              <CodeBlock>{SDK_EXAMPLE}</CodeBlock>
+              <CodeBlock title="bridge.ts">{SDK_EXAMPLE}</CodeBlock>
             </CardContent>
           </Card>
         </TabsContent>
@@ -77,15 +78,15 @@ export default function IntegrationPage() {
           <div className="flex flex-col gap-4">
             <Card>
               <CardHeader><CardTitle>Create Session</CardTitle></CardHeader>
-              <CardContent><CodeBlock>{CURL_CREATE_SESSION}</CodeBlock></CardContent>
+              <CardContent><CodeBlock>{CURL_CREATE}</CodeBlock></CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Send Event</CardTitle></CardHeader>
-              <CardContent><CodeBlock>{CURL_SEND_EVENT}</CodeBlock></CardContent>
+              <CardContent><CodeBlock>{CURL_EVENT}</CodeBlock></CardContent>
             </Card>
             <Card>
               <CardHeader><CardTitle>Get Responses</CardTitle></CardHeader>
-              <CardContent><CodeBlock>{CURL_GET_RESPONSES}</CodeBlock></CardContent>
+              <CardContent><CodeBlock>{CURL_RESPONSES}</CodeBlock></CardContent>
             </Card>
           </div>
         </TabsContent>
