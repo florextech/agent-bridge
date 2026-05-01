@@ -34,8 +34,6 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   if (error) return <Text variant="danger">{error}</Text>;
   if (!session) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
 
-  const unread = responses.filter((r) => !r.read).length;
-
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -59,45 +57,38 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
       <IntegrationBlock sessionId={session.id} />
 
       <div className="flx-card">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">Event Timeline</p>
-        {events.length === 0 ? (
-          <EmptyState title="No events yet" description="Events will appear here when the agent sends them." />
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">Timeline</p>
+        {events.length === 0 && responses.length === 0 ? (
+          <EmptyState title="No activity yet" description="Events and responses will appear here." />
         ) : (
           <Timeline>
-            {events.map((ev) => (
-              <TimelineItem key={ev.id} title={ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[ev.type] || <ChatText size={16} weight="duotone" />}>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <Badge tone="neutral">{ev.deliveryStatus}</Badge>
-                  </div>
-                  {typeof ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{ev.payload['summary']}</Text>}
-                  <Text variant="muted" size="xs">{new Date(ev.createdAt).toLocaleString()}</Text>
-                </div>
-              </TimelineItem>
-            ))}
+            {[
+              ...events.map((ev) => ({ kind: 'event' as const, id: ev.id, date: ev.createdAt, ev })),
+              ...responses.map((r) => ({ kind: 'response' as const, id: r.id, date: r.createdAt, r })),
+            ]
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              .map((item) =>
+                item.kind === 'event' ? (
+                  <TimelineItem key={item.id} title={item.ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[item.ev.type] || <ChatText size={16} weight="duotone" />}>
+                    <div className="flex flex-col gap-1">
+                      <Badge tone="neutral">{item.ev.deliveryStatus}</Badge>
+                      {typeof item.ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{item.ev.payload['summary']}</Text>}
+                      <Text variant="muted" size="xs">{new Date(item.ev.createdAt).toLocaleString()}</Text>
+                    </div>
+                  </TimelineItem>
+                ) : (
+                  <TimelineItem key={item.id} title="User response" icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
+                    <div className="flex flex-col gap-1">
+                      <Text size="sm">{item.r.content}</Text>
+                      <div className="flex items-center gap-2">
+                        {!item.r.read && <Badge tone="warning">unread</Badge>}
+                        <Text variant="muted" size="xs">{new Date(item.r.createdAt).toLocaleString()}</Text>
+                      </div>
+                    </div>
+                  </TimelineItem>
+                ),
+              )}
           </Timeline>
-        )}
-      </div>
-
-      <div className="flx-card">
-        <div className="flex items-center gap-3 mb-4">
-          <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">Responses</p>
-          {unread > 0 && <Badge tone="brand">{unread} unread</Badge>}
-        </div>
-        {responses.length === 0 ? (
-          <EmptyState title="No responses yet" description="Responses from the channel will appear here." />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {responses.map((r) => (
-              <div key={r.id} className="flex items-start gap-3 p-4 rounded-xl bg-(--surface-muted) border border-(--border)">
-                <div className="flex-1">
-                  <Text>{r.content}</Text>
-                  <Text variant="muted" size="xs">{new Date(r.createdAt).toLocaleString()}</Text>
-                </div>
-                {!r.read && <Badge tone="warning">unread</Badge>}
-              </div>
-            ))}
-          </div>
         )}
       </div>
     </div>

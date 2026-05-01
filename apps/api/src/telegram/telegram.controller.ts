@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post } from '@nestjs/common';
 import { TelegramUsersService } from './telegram-users.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { TelegramProvider } from '../providers/telegram.provider';
 import type { TelegramUser } from './telegram-users.service';
 
 interface TelegramUpdate {
@@ -35,6 +36,7 @@ export class TelegramController {
 
       this.startPolling(body.botToken);
       this.botUsername = data.result?.username || null;
+      TelegramProvider.setupToken = body.botToken;
       return { ok: true, botUsername: this.botUsername || undefined };
     } catch (e) {
       return { ok: false, error: (e as Error).message };

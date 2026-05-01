@@ -7,11 +7,12 @@ import { TelegramUsersService } from '../telegram/telegram-users.service';
 export class TelegramProvider implements MessagingProvider {
   private readonly logger = new Logger(TelegramProvider.name);
   readonly channelType = ChannelType.Telegram;
+  static setupToken: string | null = null;
 
   constructor(private readonly users: TelegramUsersService) {}
 
   async sendNotification(event: AgentEvent, config: Record<string, unknown>): Promise<void> {
-    const botToken = (config['botToken'] as string) || process.env['TELEGRAM_BOT_TOKEN'];
+    const botToken = (config['botToken'] as string | undefined)?.trim() || process.env['TELEGRAM_BOT_TOKEN'] || TelegramProvider.setupToken;
     if (!botToken) throw new Error('Telegram botToken required');
 
     // If chatId is provided explicitly, send only there. Otherwise send to all authorized users.
