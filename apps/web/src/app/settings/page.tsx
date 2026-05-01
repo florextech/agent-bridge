@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
+import { TelegramLogo } from '@phosphor-icons/react';
 import { ChannelType } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 
@@ -31,12 +32,19 @@ export default function SettingsPage() {
       <div>
         <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Configuration</p>
         <Heading as="h2" size="lg">Channel Settings</Heading>
-        <Text variant="muted" size="sm">Configure your Telegram bot to receive agent notifications.</Text>
+        <Text variant="muted" size="sm">Configure messaging channels to receive agent notifications.</Text>
       </div>
 
       <div className="flx-card">
-        <p className="font-display text-xl font-semibold mb-1">Telegram</p>
-        <Text variant="muted" size="sm" className="mb-6">Create a session linked to a Telegram bot.</Text>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="size-10 rounded-xl bg-[rgb(0_136_204/0.15)] flex items-center justify-center">
+            <TelegramLogo size={22} weight="duotone" className="text-[#0088cc]" />
+          </div>
+          <div>
+            <p className="font-display font-semibold">Telegram</p>
+            <Text variant="muted" size="xs">Create a session linked to a Telegram bot.</Text>
+          </div>
+        </div>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">

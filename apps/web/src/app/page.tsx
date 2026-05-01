@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Badge, EmptyState, Heading, Spinner, Stat, Status, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Text } from '@florexlabs/ui';
+import { ListChecks, Pulse, XCircle } from '@phosphor-icons/react';
 import type { Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 
@@ -31,13 +32,22 @@ export default function SessionsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="flx-card flx-card-hover">
+        <div className="flx-card flx-card-hover flex items-start gap-4">
+          <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
+            <ListChecks size={22} className="text-(--brand-600)" weight="duotone" />
+          </div>
           <Stat label="Total Sessions" value={String(sessions.length)} />
         </div>
-        <div className="flx-card flx-card-hover">
+        <div className="flx-card flx-card-hover flex items-start gap-4">
+          <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
+            <Pulse size={22} className="text-(--brand-600)" weight="duotone" />
+          </div>
           <Stat label="Active" value={String(active)} trend="up" />
         </div>
-        <div className="flx-card flx-card-hover">
+        <div className="flx-card flx-card-hover flex items-start gap-4">
+          <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
+            <XCircle size={22} className="text-(--muted)" weight="duotone" />
+          </div>
           <Stat label="Closed" value={String(sessions.length - active)} trend="neutral" />
         </div>
       </div>

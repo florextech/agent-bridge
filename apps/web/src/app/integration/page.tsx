@@ -1,6 +1,7 @@
 'use client';
 
 import { CodeBlock, CopyCommand, Heading, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@florexlabs/ui';
+import { Terminal, Code } from '@phosphor-icons/react';
 
 const SDK_EXAMPLE = `import { AgentBridgeClient } from '@agent-bridge/sdk';
 import { AgentEventType } from '@agent-bridge/core';
@@ -60,13 +61,17 @@ export default function IntegrationPage() {
 
       <Tabs defaultValue="sdk">
         <TabsList>
-          <TabsTrigger value="sdk">TypeScript SDK</TabsTrigger>
-          <TabsTrigger value="curl">curl</TabsTrigger>
+          <TabsTrigger value="sdk">
+            <span className="inline-flex items-center gap-1.5"><Code size={16} weight="duotone" /> TypeScript SDK</span>
+          </TabsTrigger>
+          <TabsTrigger value="curl">
+            <span className="inline-flex items-center gap-1.5"><Terminal size={16} weight="duotone" /> curl</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sdk">
           <div className="flx-card">
-            <p className="font-display text-xl font-semibold mb-4">SDK Usage</p>
+            <p className="font-display font-semibold mb-4">SDK Usage</p>
             <CodeBlock title="bridge.ts">{SDK_EXAMPLE}</CodeBlock>
           </div>
         </TabsContent>

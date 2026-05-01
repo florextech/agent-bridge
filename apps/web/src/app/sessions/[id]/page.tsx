@@ -3,12 +3,19 @@
 import { useEffect, useState } from 'react';
 import { use } from 'react';
 import { Badge, DataList, DataListItem, EmptyState, Heading, Spinner, Status, Text, Timeline, TimelineItem } from '@florexlabs/ui';
+import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText } from '@phosphor-icons/react';
 import type { AgentEvent, ChannelResponse, Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
+import type { ReactNode } from 'react';
 
-const EVENT_EMOJI: Record<string, string> = {
-  task_started: '🚀', task_completed: '✅', needs_review: '👀',
-  needs_approval: '🔐', error: '❌', test_results: '🧪', message: '💬',
+const EVENT_ICONS: Record<string, ReactNode> = {
+  task_started: <Rocket size={16} weight="duotone" className="text-(--brand-600)" />,
+  task_completed: <CheckCircle size={16} weight="duotone" className="text-(--success)" />,
+  needs_review: <Eye size={16} weight="duotone" className="text-(--warning)" />,
+  needs_approval: <ShieldCheck size={16} weight="duotone" className="text-(--brand-700)" />,
+  error: <XCircle size={16} weight="duotone" className="text-(--danger)" />,
+  test_results: <TestTube size={16} weight="duotone" className="text-(--brand-600)" />,
+  message: <ChatText size={16} weight="duotone" className="text-(--muted)" />,
 };
 
 export default function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,8 +39,10 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <a href="/" className="text-(--muted) text-sm hover:text-(--foreground) transition-colors">← Back to sessions</a>
-        <Heading as="h2" size="lg" className="mt-2">{session.projectName}</Heading>
+        <a href="/" className="inline-flex items-center gap-1.5 text-(--muted) text-sm hover:text-(--foreground) transition-colors mb-2">
+          <ArrowLeft size={14} /> Back to sessions
+        </a>
+        <Heading as="h2" size="lg">{session.projectName}</Heading>
         <Text variant="muted" size="sm">Agent: {session.agentName}</Text>
       </div>
 
@@ -54,8 +63,11 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <Timeline>
             {events.map((ev) => (
-              <TimelineItem key={ev.id} title={`${EVENT_EMOJI[ev.type] || '📨'} ${ev.type}`} icon={<Badge tone="neutral">{ev.deliveryStatus}</Badge>}>
+              <TimelineItem key={ev.id} title={ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[ev.type] || <ChatText size={16} weight="duotone" />}>
                 <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Badge tone="neutral">{ev.deliveryStatus}</Badge>
+                  </div>
                   {typeof ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{ev.payload['summary']}</Text>}
                   <Text variant="muted" size="xs">{new Date(ev.createdAt).toLocaleString()}</Text>
                 </div>
