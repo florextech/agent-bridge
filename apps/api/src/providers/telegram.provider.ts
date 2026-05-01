@@ -1,41 +1,49 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChannelType } from '@agent-bridge/core';
 import type { AgentEvent, ChannelResponse, MessagingProvider } from '@agent-bridge/core';
-
-interface TelegramConfig {
-  botToken: string;
-  chatId: string;
-}
+import { TelegramUsersService } from '../telegram/telegram-users.service';
 
 @Injectable()
 export class TelegramProvider implements MessagingProvider {
   private readonly logger = new Logger(TelegramProvider.name);
   readonly channelType = ChannelType.Telegram;
 
+  constructor(private readonly users: TelegramUsersService) {}
+
   async sendNotification(event: AgentEvent, config: Record<string, unknown>): Promise<void> {
-    const { botToken, chatId } = config as unknown as TelegramConfig;
-    if (!botToken || !chatId) {
-      throw new Error('Telegram config requires botToken and chatId');
+    const botToken = (config['botToken'] as string) || process.env['TELEGRAM_BOT_TOKEN'];
+    if (!botToken) throw new Error('Telegram botToken required');
+
+    // If chatId is provided explicitly, send only there. Otherwise send to all authorized users.
+    const explicitChatId = config['chatId'] as string | undefined;
+    const targets = explicitChatId
+      ? [explicitChatId]
+      : this.users.findAuthorized().map((u) => u.chatId);
+
+    if (targets.length === 0) {
+      this.logger.warn('No authorized Telegram users to notify');
+      return;
     }
 
     const text = this.formatMessage(event);
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      this.logger.error(`Telegram API error: ${res.status} ${body}`);
-      throw new Error(`Telegram API error: ${res.status}`);
-    }
+    await Promise.all(
+      targets.map(async (chatId) => {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          this.logger.error(`Telegram API error for ${chatId}: ${res.status} ${body}`);
+        }
+      }),
+    );
   }
 
   parseIncomingMessage(_raw: unknown): ChannelResponse | null {
-    // TODO: implement webhook parsing for Telegram responses
     return null;
   }
 

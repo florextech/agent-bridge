@@ -11,6 +11,14 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface TelegramUser {
+  chatId: string;
+  username: string | null;
+  firstName: string | null;
+  authorized: boolean;
+  linkedAt: string;
+}
+
 export const bridgeApi = {
   getSessions: () => api<Session[]>('/agent-sessions'),
   getSession: (id: string) => api<Session>(`/agent-sessions/${id}`),
@@ -20,4 +28,9 @@ export const bridgeApi = {
   getResponses: (sessionId: string) => api<ChannelResponse[]>(`/agent-sessions/${sessionId}/responses`),
   markRead: (sessionId: string) =>
     api<{ ok: true }>(`/agent-sessions/${sessionId}/mark-read`, { method: 'POST' }),
+  getTelegramUsers: () => api<TelegramUser[]>('/telegram/users'),
+  toggleTelegramAuth: (chatId: string) =>
+    api<TelegramUser>(`/telegram/users/${chatId}/authorize`, { method: 'POST' }),
+  removeTelegramUser: (chatId: string) =>
+    api<{ ok: true }>(`/telegram/users/${chatId}`, { method: 'DELETE' }),
 };

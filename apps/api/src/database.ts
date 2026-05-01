@@ -45,5 +45,14 @@ function migrate(db: Database.Database): void {
       read INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS telegram_users (
+      id INTEGER PRIMARY KEY,
+      chat_id TEXT NOT NULL UNIQUE,
+      username TEXT,
+      first_name TEXT,
+      authorized INTEGER NOT NULL DEFAULT 1,
+      linked_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
