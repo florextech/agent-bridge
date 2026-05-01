@@ -12,5 +12,6 @@
     "declarationMap": false,
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/__tests__"]
 }
