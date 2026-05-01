@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Badge, EmptyState, Heading, Spinner, Stat, Status, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Text } from '@florexlabs/ui';
 import { ListChecks, Pulse, XCircle, Trash } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import type { Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 
 export default function SessionsPage() {
+  const t = useTranslations('dashboard');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,9 +33,9 @@ export default function SessionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Dashboard</p>
-        <Heading as="h2" size="lg">Sessions</Heading>
-        <Text variant="muted" size="sm">Active agent sessions across all projects.</Text>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">{t('eyebrow')}</p>
+        <Heading as="h2" size="lg">{t('title')}</Heading>
+        <Text variant="muted" size="sm">{t('subtitle')}</Text>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -41,36 +43,36 @@ export default function SessionsPage() {
           <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
             <ListChecks size={22} className="text-(--brand-600)" weight="duotone" />
           </div>
-          <Stat label="Total Sessions" value={String(sessions.length)} />
+          <Stat label={t('totalSessions')} value={String(sessions.length)} />
         </div>
         <div className="flx-card flx-card-hover flex items-start gap-4">
           <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
             <Pulse size={22} className="text-(--brand-600)" weight="duotone" />
           </div>
-          <Stat label="Active" value={String(active)} trend="up" />
+          <Stat label={t('active')} value={String(active)} trend="up" />
         </div>
         <div className="flx-card flx-card-hover flex items-start gap-4">
           <div className="size-10 rounded-xl bg-[rgb(189_241_70/0.1)] flex items-center justify-center shrink-0">
             <XCircle size={22} className="text-(--muted)" weight="duotone" />
           </div>
-          <Stat label="Closed" value={String(sessions.length - active)} trend="neutral" />
+          <Stat label={t('closed')} value={String(sessions.length - active)} trend="neutral" />
         </div>
       </div>
 
       {sessions.length === 0 ? (
         <div className="flx-card p-10">
-          <EmptyState title="No sessions yet" description="Send an event from an agent to create your first session." />
+          <EmptyState title={t('noSessions')} description={t('noSessionsDesc')} />
         </div>
       ) : (
         <div className="flx-card p-0 overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Channel</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead>{t('project')}</TableHead>
+                <TableHead>{t('agent')}</TableHead>
+                <TableHead>{t('channel')}</TableHead>
+                <TableHead>{t('status')}</TableHead>
+                <TableHead>{t('updated')}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

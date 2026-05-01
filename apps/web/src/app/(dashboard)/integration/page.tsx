@@ -2,6 +2,7 @@
 
 import { CodeBlock, CopyCommand, Heading, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@florexlabs/ui';
 import { Terminal, Code } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 
 const SDK_EXAMPLE = `import { AgentBridgeClient } from '@agent-bridge/sdk';
 import { AgentEventType } from '@agent-bridge/core';
@@ -46,16 +47,18 @@ const CURL_EVENT = `curl -X POST http://localhost:3001/agent-events \\
 const CURL_RESPONSES = `curl http://localhost:3001/agent-sessions/SESSION_ID/responses`;
 
 export default function IntegrationPage() {
+  const t = useTranslations('integration');
+
   return (
     <div className="flex flex-col gap-8 max-w-2xl">
       <div>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Developers</p>
-        <Heading as="h2" size="lg">Integration Guide</Heading>
-        <Text variant="muted" size="sm">Connect your code agent to Agent Bridge using curl or the TypeScript SDK.</Text>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">{t('eyebrow')}</p>
+        <Heading as="h2" size="lg">{t('title')}</Heading>
+        <Text variant="muted" size="sm">{t('subtitle')}</Text>
       </div>
 
       <div className="flx-card">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--muted) mb-3">Install</p>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--muted) mb-3">{t('install')}</p>
         <CopyCommand command="pnpm add @agent-bridge/sdk @agent-bridge/core" />
       </div>
 
@@ -71,7 +74,7 @@ export default function IntegrationPage() {
 
         <TabsContent value="sdk">
           <div className="flx-card">
-            <p className="font-display font-semibold mb-4">SDK Usage</p>
+            <p className="font-display font-semibold mb-4">{t('sdkUsage')}</p>
             <CodeBlock title="bridge.ts">{SDK_EXAMPLE}</CodeBlock>
           </div>
         </TabsContent>
@@ -79,15 +82,15 @@ export default function IntegrationPage() {
         <TabsContent value="curl">
           <div className="flex flex-col gap-4">
             <div className="flx-card">
-              <p className="font-display font-semibold mb-3">Create Session</p>
+              <p className="font-display font-semibold mb-3">{t('createSession')}</p>
               <CodeBlock>{CURL_CREATE}</CodeBlock>
             </div>
             <div className="flx-card">
-              <p className="font-display font-semibold mb-3">Send Event</p>
+              <p className="font-display font-semibold mb-3">{t('sendEvent')}</p>
               <CodeBlock>{CURL_EVENT}</CodeBlock>
             </div>
             <div className="flx-card">
-              <p className="font-display font-semibold mb-3">Get Responses</p>
+              <p className="font-display font-semibold mb-3">{t('getResponses')}</p>
               <CodeBlock>{CURL_RESPONSES}</CodeBlock>
             </div>
           </div>

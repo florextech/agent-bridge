@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
+import { useTranslations } from 'next-intl';
 import { bridgeApi } from '@/lib/api';
 
 export default function LoginPage() {
+  const t = useTranslations('auth');
+  const tc = useTranslations('common');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,7 +26,7 @@ export default function LoginPage() {
     e.preventDefault();
     const res = await signIn('credentials', { email, password, redirect: false });
     if (res?.error) {
-      setError('Invalid credentials');
+      setError(t('invalidCredentials'));
     } else {
       window.location.href = '/';
     }
@@ -33,20 +36,20 @@ export default function LoginPage() {
     <><div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
         <span className="size-8 rounded-lg bg-(--brand-600) flex items-center justify-center text-[#111513] text-sm font-bold">AB</span>
-        <Heading as="h1" size="md">Agent Bridge</Heading>
+        <Heading as="h1" size="md">{tc('appName')}</Heading>
       </div>
-      <Text variant="muted" size="sm" className="mb-6">Sign in to access the dashboard.</Text>
+      <Text variant="muted" size="sm" className="mb-6">{t('signInDesc')}</Text>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('email')}</Label>
           <Input id="email" type="email" value={email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} autoFocus />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('password')}</Label>
           <Input id="password" type="password" value={password} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} />
         </div>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Button type="submit">Sign In</Button>
+        <Button type="submit">{t('signIn')}</Button>
       </form>
     </div></>
   );

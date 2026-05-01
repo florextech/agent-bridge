@@ -5,9 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { UserPlus } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { bridgeApi } from '@/lib/api';
 
 function AcceptInviteForm() {
+  const t = useTranslations('auth');
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
   const [form, setForm] = useState({ name: '', password: '' });
@@ -52,20 +54,20 @@ function AcceptInviteForm() {
         <div className="size-8 rounded-lg bg-(--brand-600) flex items-center justify-center">
           <UserPlus size={18} weight="bold" className="text-[#111513]" />
         </div>
-        <Heading as="h1" size="md">Accept Invitation</Heading>
+        <Heading as="h1" size="md">{t('acceptInvite')}</Heading>
       </div>
-      <Text variant="muted" size="sm" className="mb-6">Create your Agent Bridge account.</Text>
+      <Text variant="muted" size="sm" className="mb-6">{t('acceptDesc')}</Text>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('name')}</Label>
           <Input id="name" value={form.name} onChange={set('name')} autoFocus />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('password')}</Label>
           <Input id="password" type="password" value={form.password} onChange={set('password')} />
         </div>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Button type="submit">Create Account</Button>
+        <Button type="submit">{t('accept')}</Button>
       </form>
     </div></>
   );

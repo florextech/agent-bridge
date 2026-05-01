@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { Shield } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { bridgeApi } from '@/lib/api';
 
 export default function SetupPage() {
+  const t = useTranslations('auth');
   const [form, setForm] = useState({ email: '', name: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -42,24 +44,24 @@ export default function SetupPage() {
         <div className="size-8 rounded-lg bg-(--brand-600) flex items-center justify-center">
           <Shield size={18} weight="bold" className="text-[#111513]" />
         </div>
-        <Heading as="h1" size="md">Setup Admin</Heading>
+        <Heading as="h1" size="md">{t('setupAdmin')}</Heading>
       </div>
-      <Text variant="muted" size="sm" className="mb-6">Create the first admin account for Agent Bridge.</Text>
+      <Text variant="muted" size="sm" className="mb-6">{t('setupDesc')}</Text>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('name')}</Label>
           <Input id="name" value={form.name} onChange={set('name')} autoFocus />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('email')}</Label>
           <Input id="email" type="email" value={form.email} onChange={set('email')} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('password')}</Label>
           <Input id="password" type="password" value={form.password} onChange={set('password')} />
         </div>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Button type="submit">Create Admin Account</Button>
+        <Button type="submit">{t('createAdmin')}</Button>
       </form>
     </div></>
   );

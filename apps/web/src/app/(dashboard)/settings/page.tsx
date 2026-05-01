@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { TelegramLogo, UserCheck, UserMinus, Copy, Check, Envelope, UserPlus, Trash, Shield } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { ChannelType } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 import type { TelegramUser } from '@/lib/api';
 import type { AppUser } from '@/lib/api';
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
   const [botToken, setBotToken] = useState('');
   const [botUsername, setBotUsername] = useState<string | null>(null);
   const [users, setUsers] = useState<TelegramUser[]>([]);
@@ -52,9 +54,9 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-8 max-w-xl">
       <div>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Configuration</p>
-        <Heading as="h2" size="lg">Telegram Setup</Heading>
-        <Text variant="muted" size="sm">Connect your bot and manage who receives notifications.</Text>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">{t('eyebrow')}</p>
+        <Heading as="h2" size="lg">{t('title')}</Heading>
+        <Text variant="muted" size="sm">{t('subtitle')}</Text>
       </div>
 
       {/* Step 1: Connect bot */}
@@ -64,16 +66,16 @@ export default function SettingsPage() {
             <TelegramLogo size={22} weight="duotone" className="text-[#0088cc]" />
           </div>
           <div>
-            <p className="font-display font-semibold">1. Connect Bot</p>
-            <Text variant="muted" size="xs">Paste your bot token from @BotFather</Text>
+            <p className="font-display font-semibold">{t('connectBot')}</p>
+            <Text variant="muted" size="xs">{t('connectBotDesc')}</Text>
           </div>
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="botToken">Bot Token</Label>
+            <Label htmlFor="botToken">{t('botToken')}</Label>
             <Input id="botToken" type="password" placeholder="123456:ABC-DEF..." value={botToken} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBotToken(e.target.value)} />
           </div>
-          <Button onClick={setupBot}>{botUsername ? 'Reconnect' : 'Connect Bot'}</Button>
+          <Button onClick={setupBot}>{botUsername ? t('reconnect') : t('connect')}</Button>
           {result && <Alert variant={result.ok ? 'success' : 'danger'}>{result.msg}</Alert>}
         </div>
       </div>
@@ -81,8 +83,8 @@ export default function SettingsPage() {
       {/* Step 2: Share link */}
       {botUsername && (
         <div className="flx-card">
-          <p className="font-display font-semibold mb-2">2. Share Link</p>
-          <Text variant="muted" size="sm" className="mb-4">Anyone who clicks this link and presses Start will be auto-linked.</Text>
+          <p className="font-display font-semibold mb-2">{t('shareLink')}</p>
+          <Text variant="muted" size="sm" className="mb-4">{t('shareLinkDesc')}</Text>
           <div className="flex items-center gap-2 p-3 rounded-xl bg-(--surface-muted) border border-(--border)">
             <code className="flex-1 text-sm text-(--brand-600)">https://t.me/{botUsername}</code>
             <button onClick={copyLink} className="p-2 rounded-lg hover:bg-(--surface) transition-colors text-(--muted) hover:text-(--foreground)">
@@ -96,13 +98,13 @@ export default function SettingsPage() {
       <div className="flx-card">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="font-display font-semibold">{botUsername ? '3. ' : ''}Authorized Users</p>
-            <Text variant="muted" size="xs">{users.length} user(s) linked</Text>
+            <p className="font-display font-semibold">{botUsername ? '3. ' : ''}{t('authorizedUsers')}</p>
+            <Text variant="muted" size="xs">{users.length} {t('usersLinked')}</Text>
           </div>
-          {users.length > 0 && <Badge tone="brand">{users.filter((u) => u.authorized).length} active</Badge>}
+          {users.length > 0 && <Badge tone="brand">{users.filter((u) => u.authorized).length} {t('active')}</Badge>}
         </div>
         {users.length === 0 ? (
-          <Text variant="muted" size="sm">No users linked yet. Connect your bot and share the link.</Text>
+          <Text variant="muted" size="sm">{t('noUsers')}</Text>
         ) : (
           <div className="flex flex-col gap-2">
             {users.map((u) => (
@@ -111,7 +113,7 @@ export default function SettingsPage() {
                   <p className="font-medium text-sm truncate">{u.firstName || u.username || u.chatId}</p>
                   <p className="text-xs text-(--muted)">{u.username ? `@${u.username}` : `ID: ${u.chatId}`}</p>
                 </div>
-                <Badge tone={u.authorized ? 'success' : 'neutral'}>{u.authorized ? 'active' : 'paused'}</Badge>
+                <Badge tone={u.authorized ? 'success' : 'neutral'}>{u.authorized ? t('active') : t('paused')}</Badge>
                 <button onClick={() => toggleAuth(u.chatId)} className="p-2 rounded-lg hover:bg-(--surface) transition-colors text-(--muted) hover:text-(--foreground)" title={u.authorized ? 'Pause' : 'Activate'}>
                   <UserCheck size={16} weight={u.authorized ? 'fill' : 'regular'} />
                 </button>
@@ -127,8 +129,8 @@ export default function SettingsPage() {
       {/* Quick session */}
       {botUsername && (
         <div className="flx-card">
-          <p className="font-display font-semibold mb-2">Quick Session</p>
-          <Text variant="muted" size="sm" className="mb-4">Create a session that notifies all authorized users.</Text>
+          <p className="font-display font-semibold mb-2">{t('quickSession')}</p>
+          <Text variant="muted" size="sm" className="mb-4">{t('quickSessionDesc')}</Text>
           <QuickSession botToken={botToken} />
         </div>
       )}
@@ -140,6 +142,7 @@ export default function SettingsPage() {
 }
 
 function QuickSession({ botToken }: { botToken: string }) {
+  const t = useTranslations('settings');
   const [form, setForm] = useState({ projectName: '', agentName: '' });
   const [session, setSession] = useState<{ id: string } | null>(null);
   const [copiedKey, setCopiedKey] = useState('');
@@ -248,15 +251,15 @@ After reading: curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read`;
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="qProject">Project</Label>
+          <Label htmlFor="qProject">{t('projectName')}</Label>
           <Input id="qProject" placeholder="my-project" value={form.projectName} onChange={set('projectName')} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="qAgent">Agent</Label>
+          <Label htmlFor="qAgent">{t('agentName')}</Label>
           <Input id="qAgent" placeholder="codex" value={form.agentName} onChange={set('agentName')} />
         </div>
       </div>
-      <Button onClick={create}>Create Session</Button>
+      <Button onClick={create}>{t('createSession')}</Button>
     </div>
   );
 }
@@ -276,6 +279,7 @@ function CopyBlock({ label, value, copied, onCopy }: { label: string; value: str
 }
 
 function UsersSection() {
+  const t = useTranslations('settings');
   const [users, setUsers] = useState<AppUser[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
@@ -305,9 +309,9 @@ function UsersSection() {
   return (
     <>
       <div>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Team</p>
-        <Heading as="h2" size="lg">Users</Heading>
-        <Text variant="muted" size="sm">Manage team members and send invitations.</Text>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">{t('team')}</p>
+        <Heading as="h2" size="lg">{t('users')}</Heading>
+        <Text variant="muted" size="sm">{t('manageTeam')}</Text>
       </div>
 
       <div className="flx-card">
@@ -316,23 +320,23 @@ function UsersSection() {
             <Envelope size={22} weight="duotone" className="text-(--brand-600)" />
           </div>
           <div>
-            <p className="font-display font-semibold">Invite Member</p>
-            <Text variant="muted" size="xs">Send an email invitation</Text>
+            <p className="font-display font-semibold">{t('inviteMember')}</p>
+            <Text variant="muted" size="xs">{t('sendInvitation')}</Text>
           </div>
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="inviteEmail">Email</Label>
+            <Label htmlFor="inviteEmail">{t('email')}</Label>
             <Input id="inviteEmail" type="email" placeholder="user@example.com" value={inviteEmail} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInviteEmail(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="inviteRole">Role</Label>
+            <Label htmlFor="inviteRole">{t('role')}</Label>
             <select id="inviteRole" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="px-3 py-2 rounded-xl bg-(--surface-muted) border border-(--border) text-sm text-(--foreground)">
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
+              <option value="member">{t('member')}</option>
+              <option value="admin">{t('admin')}</option>
             </select>
           </div>
-          <Button onClick={sendInvite}><UserPlus size={16} weight="bold" className="mr-2" />Send Invitation</Button>
+          <Button onClick={sendInvite}><UserPlus size={16} weight="bold" className="mr-2" />{t('sendInvite')}</Button>
           {result && <Alert variant={result.ok ? 'success' : 'danger'}>{result.msg}</Alert>}
         </div>
       </div>
@@ -340,7 +344,7 @@ function UsersSection() {
       <div className="flx-card">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="font-display font-semibold">Team Members</p>
+            <p className="font-display font-semibold">{t('teamMembers')}</p>
             <Text variant="muted" size="xs">{users.length} user(s)</Text>
           </div>
         </div>
