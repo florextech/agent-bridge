@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Heading, Input, Label, Text } from '@florexlabs/ui';
+import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { ChannelType } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 
@@ -27,18 +27,18 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-lg">
+    <div className="flex flex-col gap-8 max-w-lg">
       <div>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Configuration</p>
         <Heading as="h2" size="lg">Channel Settings</Heading>
-        <Text variant="muted">Configure your Telegram bot to receive agent notifications.</Text>
+        <Text variant="muted" size="sm">Configure your Telegram bot to receive agent notifications.</Text>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Telegram Configuration</CardTitle>
-          <CardDescription>Create a session linked to a Telegram bot.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+      <div className="flx-card">
+        <p className="font-display text-xl font-semibold mb-1">Telegram</p>
+        <Text variant="muted" size="sm" className="mb-6">Create a session linked to a Telegram bot.</Text>
+
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="projectName">Project Name</Label>
             <Input id="projectName" placeholder="my-project" value={form.projectName} onChange={set('projectName')} />
@@ -56,11 +56,9 @@ export default function SettingsPage() {
             <Input id="chatId" placeholder="-1001234567890" value={form.chatId} onChange={set('chatId')} />
           </div>
           <Button onClick={handleCreate}>Create Session</Button>
-          {result && (
-            <Alert variant={result.ok ? 'success' : 'danger'}>{result.msg}</Alert>
-          )}
-        </CardContent>
-      </Card>
+          {result && <Alert variant={result.ok ? 'success' : 'danger'}>{result.msg}</Alert>}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,22 @@
 @import "tailwindcss";
 @source "../../node_modules/@florexlabs/ui/dist";
 @import "@florexlabs/ui/florex.css";
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-poppins);
+  --font-display: var(--font-montserrat);
+}
+
+.flx-card {
+  @apply rounded-2xl border border-(--border) bg-[rgb(17_21_19/0.78)] p-6 backdrop-blur transition duration-200;
+}
+
+.flx-card-hover {
+  @apply hover:-translate-y-0.5 hover:border-[rgb(157_223_75/0.48)] hover:shadow-[0_0_0_1px_rgb(189_241_70/0.12),0_22px_48px_-32px_rgb(157_223_75/0.7)];
+}
+
+.flx-pill {
+  @apply inline-flex items-center rounded-full border border-[rgb(189_241_70/0.35)] bg-[rgb(189_241_70/0.12)] px-2.5 py-1 text-xs font-semibold text-(--brand-700);
+}

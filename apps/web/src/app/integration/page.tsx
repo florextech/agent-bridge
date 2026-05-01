@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CodeBlock, CopyCommand, Heading, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@florexlabs/ui';
+import { CodeBlock, CopyCommand, Heading, Tabs, TabsContent, TabsList, TabsTrigger, Text } from '@florexlabs/ui';
 
 const SDK_EXAMPLE = `import { AgentBridgeClient } from '@agent-bridge/sdk';
 import { AgentEventType } from '@agent-bridge/core';
@@ -46,18 +46,17 @@ const CURL_RESPONSES = `curl http://localhost:3001/agent-sessions/SESSION_ID/res
 
 export default function IntegrationPage() {
   return (
-    <div className="flex flex-col gap-6 max-w-2xl">
+    <div className="flex flex-col gap-8 max-w-2xl">
       <div>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Developers</p>
         <Heading as="h2" size="lg">Integration Guide</Heading>
-        <Text variant="muted">Connect your code agent to Agent Bridge using curl or the TypeScript SDK.</Text>
+        <Text variant="muted" size="sm">Connect your code agent to Agent Bridge using curl or the TypeScript SDK.</Text>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Install SDK</CardTitle></CardHeader>
-        <CardContent>
-          <CopyCommand command="pnpm add @agent-bridge/sdk @agent-bridge/core" />
-        </CardContent>
-      </Card>
+      <div className="flx-card">
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--muted) mb-3">Install</p>
+        <CopyCommand command="pnpm add @agent-bridge/sdk @agent-bridge/core" />
+      </div>
 
       <Tabs defaultValue="sdk">
         <TabsList>
@@ -66,28 +65,26 @@ export default function IntegrationPage() {
         </TabsList>
 
         <TabsContent value="sdk">
-          <Card>
-            <CardHeader><CardTitle>SDK Usage</CardTitle></CardHeader>
-            <CardContent>
-              <CodeBlock title="bridge.ts">{SDK_EXAMPLE}</CodeBlock>
-            </CardContent>
-          </Card>
+          <div className="flx-card">
+            <p className="font-display text-xl font-semibold mb-4">SDK Usage</p>
+            <CodeBlock title="bridge.ts">{SDK_EXAMPLE}</CodeBlock>
+          </div>
         </TabsContent>
 
         <TabsContent value="curl">
           <div className="flex flex-col gap-4">
-            <Card>
-              <CardHeader><CardTitle>Create Session</CardTitle></CardHeader>
-              <CardContent><CodeBlock>{CURL_CREATE}</CodeBlock></CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Send Event</CardTitle></CardHeader>
-              <CardContent><CodeBlock>{CURL_EVENT}</CodeBlock></CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Get Responses</CardTitle></CardHeader>
-              <CardContent><CodeBlock>{CURL_RESPONSES}</CodeBlock></CardContent>
-            </Card>
+            <div className="flx-card">
+              <p className="font-display font-semibold mb-3">Create Session</p>
+              <CodeBlock>{CURL_CREATE}</CodeBlock>
+            </div>
+            <div className="flx-card">
+              <p className="font-display font-semibold mb-3">Send Event</p>
+              <CodeBlock>{CURL_EVENT}</CodeBlock>
+            </div>
+            <div className="flx-card">
+              <p className="font-display font-semibold mb-3">Get Responses</p>
+              <CodeBlock>{CURL_RESPONSES}</CodeBlock>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
