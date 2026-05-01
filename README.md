@@ -1,33 +1,37 @@
 # Agent Bridge
 
-Multi-channel platform to connect code agents (Codex, Copilot, etc.) with messaging channels (Telegram, WhatsApp, Discord, Slack).
-
-Get notified when your agent completes a task, needs review, hits an error, or needs your input — directly in your preferred messaging app.
+Multi-channel platform to connect code agents (Codex, Kiro, Cursor, etc.) with messaging channels. Get notified on Telegram or email when your agent completes a task, needs review, hits an error, or needs your input — and respond directly from the channel.
 
 ## Architecture
 
 ```
 agent-bridge/
 ├── apps/
-│   ├── api/          # NestJS backend — events, sessions, providers
-│   └── web/          # Next.js frontend — dashboard, timeline, settings
+│   ├── api/          # NestJS + Prisma + PostgreSQL
+│   ├── web/          # Next.js + NextAuth + @florexlabs/ui
+│   └── runner.js     # Autonomous polling script
 ├── packages/
-│   ├── core/         # Shared types, enums, DTOs, provider interface
+│   ├── core/         # Shared types, enums, DTOs, MessagingProvider interface
 │   └── sdk/          # TypeScript client for sending events
 ```
 
-### Design decisions
+## Features
 
-- **Provider abstraction**: `MessagingProvider` interface in `packages/core` — Telegram is the first implementation, but WhatsApp/Discord/Slack can be added without touching core logic.
-- **SQLite for MVP**: Zero-config database via `better-sqlite3`. Swap to PostgreSQL when needed.
-- **Monorepo with pnpm workspaces**: Shared types between API, web, and SDK with no duplication.
-- **TypeScript strict mode**: `noUncheckedIndexedAccess`, no `any`.
+- **Bidirectional Telegram** — Send notifications, receive responses via polling
+- **Email notifications** — Via Resend provider
+- **Auto-linking** — Users send `/start` to the bot and get linked automatically
+- **User management** — Invite users via email (like Dokploy), role-based (admin/member)
+- **Auth** — NextAuth with credentials, first-time setup flow
+- **Unified timeline** — Agent events and user responses in chronological order
+- **SDK** — TypeScript client for any agent to integrate
+- **Runner** — Autonomous script that polls responses and re-invokes agents
+- **FLX Design System** — Dark premium UI with @florexlabs/ui + Phosphor Icons
 
 ## Supported events
 
 | Event | Description |
 |---|---|
-| `task_started` | Agent began working on a task |
+| `task_started` | Agent began working |
 | `task_completed` | Agent finished a task |
 | `needs_review` | Agent needs code review |
 | `needs_approval` | Agent needs approval to proceed |
@@ -41,14 +45,24 @@ agent-bridge/
 
 - Node.js >= 20
 - pnpm >= 9
+- PostgreSQL (or use Docker)
 
 ### Setup
 
 ```bash
 git clone <repo-url> && cd agent-bridge
 cp .env.example .env
+# Edit .env with your DATABASE_URL and AUTH_SECRET
+
+# Start PostgreSQL
+docker compose up db -d
+
+# Install and build
 pnpm install
 pnpm -r build
+
+# Push schema to database
+cd apps/api && npx prisma db push && cd ../..
 ```
 
 ### Run locally
@@ -61,51 +75,67 @@ pnpm dev:api
 pnpm dev:web
 ```
 
-### Docker
+### First time
+
+1. Open `http://localhost:3000`
+2. You'll be redirected to `/setup` — create your admin account
+3. Go to **Settings** → paste your Telegram bot token → **Connect Bot**
+4. Share the `t.me/your_bot` link → users press Start to auto-link
+5. Create a session → copy the **Agent System Prompt** into your agent
+
+### Run tests
 
 ```bash
-docker compose up
+pnpm test
 ```
 
-## Usage
+## Deploy with Dokploy
 
-### 1. Create a session
+Use `docker-compose.prod.yml`:
 
 ```bash
-curl -X POST http://localhost:3001/agent-sessions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "projectName": "my-project",
-    "agentName": "codex",
-    "channelType": "telegram",
-    "channelConfig": {
-      "botToken": "YOUR_BOT_TOKEN",
-      "chatId": "YOUR_CHAT_ID"
-    }
-  }'
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-### 2. Send an event
+Required env vars:
+- `POSTGRES_PASSWORD` — Database password
+- `AUTH_SECRET` — NextAuth secret (generate with `openssl rand -base64 32`)
+- `AUTH_PASSWORD` — Initial admin password
 
-```bash
-curl -X POST http://localhost:3001/agent-events \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sessionId": "SESSION_ID",
-    "type": "task_completed",
-    "payload": { "summary": "Refactored auth module" }
-  }'
-```
+Optional:
+- `TELEGRAM_BOT_TOKEN` — Auto-start Telegram polling
+- `RESEND_API_KEY` — Email notifications and invitations
+- `RESEND_FROM` — Sender email address
+- `NEXT_PUBLIC_API_URL` — API URL for the web frontend
 
-### 3. Using the SDK
+## API endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/agent-sessions` | Create a session |
+| `GET` | `/agent-sessions` | List all sessions |
+| `GET` | `/agent-sessions/:id` | Get session details |
+| `DELETE` | `/agent-sessions/:id` | Delete session |
+| `POST` | `/agent-events` | Send an agent event |
+| `GET` | `/agent-events?sessionId=` | Get events for a session |
+| `GET` | `/agent-sessions/:id/responses` | Get channel responses |
+| `POST` | `/agent-sessions/:id/mark-read` | Mark responses as read |
+| `POST` | `/telegram/setup` | Connect Telegram bot |
+| `GET` | `/telegram/users` | List linked Telegram users |
+| `POST` | `/telegram/users/:chatId/authorize` | Toggle user authorization |
+| `POST` | `/users/setup` | Create first admin account |
+| `POST` | `/users/login` | Authenticate |
+| `POST` | `/users/invite` | Send email invitation |
+| `POST` | `/users/accept-invite` | Accept invitation |
+| `GET` | `/users` | List users |
+
+## SDK usage
 
 ```typescript
 import { AgentBridgeClient } from '@agent-bridge/sdk';
 import { AgentEventType } from '@agent-bridge/core';
 
-const bridge = new AgentBridgeClient({
-  baseUrl: 'http://localhost:3001',
-});
+const bridge = new AgentBridgeClient({ baseUrl: 'http://localhost:3001' });
 
 await bridge.sendEvent({
   sessionId: 'SESSION_ID',
@@ -117,34 +147,39 @@ const responses = await bridge.getResponses('SESSION_ID');
 await bridge.markRead('SESSION_ID');
 ```
 
-## API endpoints
+## Runner (autonomous polling)
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/agent-sessions` | Create a session |
-| `GET` | `/agent-sessions` | List all sessions |
-| `GET` | `/agent-sessions/:id` | Get session details |
-| `POST` | `/agent-events` | Send an agent event |
-| `GET` | `/agent-sessions/:id/responses` | Get channel responses |
-| `POST` | `/agent-sessions/:id/mark-read` | Mark responses as read |
+```bash
+# Poll every 5s, re-invoke agent on response
+node apps/runner.js --session <ID> --command "kiro chat"
+
+# Just poll and print
+node apps/runner.js --session <ID>
+
+# Single poll (for cron)
+node apps/runner.js --session <ID> --once
+```
 
 ## Environment variables
 
-| Variable | Description | Default |
+| Variable | Description | Required |
 |---|---|---|
-| `PORT` | API server port | `3001` |
-| `DB_PATH` | SQLite database path | `./agent-bridge.db` |
-| `NEXT_PUBLIC_API_URL` | API URL for the web frontend | `http://localhost:3001` |
+| `DATABASE_URL` | PostgreSQL connection string | ✅ |
+| `AUTH_SECRET` | NextAuth secret | ✅ |
+| `PORT` | API port (default: 3001) | |
+| `TELEGRAM_BOT_TOKEN` | Auto-start Telegram polling | |
+| `RESEND_API_KEY` | Email via Resend | |
+| `RESEND_FROM` | Sender email | |
+| `NEXT_PUBLIC_API_URL` | API URL for frontend | |
 
-## Roadmap
+## Tech stack
 
-- [ ] WhatsApp provider (Twilio/Cloud API)
-- [ ] Discord provider (bot webhooks)
-- [ ] Slack provider (Slack API)
-- [ ] Webhook support for incoming responses
-- [ ] Authentication & API keys
-- [ ] Real-time updates via WebSocket
-- [ ] Event filtering & notification preferences
+- **API**: NestJS, Prisma, PostgreSQL
+- **Web**: Next.js 15 App Router, NextAuth v5, @florexlabs/ui, Phosphor Icons, Tailwind CSS v4
+- **SDK**: TypeScript, fetch API
+- **Email**: Resend, React Email
+- **Tests**: Vitest (33 tests)
+- **Infra**: Docker Compose, Dokploy-ready
 
 ## License
 
