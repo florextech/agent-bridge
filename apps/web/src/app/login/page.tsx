@@ -1,17 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
+import { bridgeApi } from '@/lib/api';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [needsSetup, setNeedsSetup] = useState(false);
+
+  useEffect(() => {
+    bridgeApi.getUserCount().then((r) => { if (r.count === 0) setNeedsSetup(true); }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (needsSetup) window.location.href = '/setup';
+  }, [needsSetup]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await signIn('credentials', { username, password, redirect: false });
+    const res = await signIn('credentials', { email, password, redirect: false });
     if (res?.error) {
       setError('Invalid credentials');
     } else {
@@ -29,8 +39,8 @@ export default function LoginPage() {
         <Text variant="muted" size="sm" className="mb-6">Sign in to access the dashboard.</Text>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="username">Username</Label>
-            <Input id="username" value={username} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)} autoFocus />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" value={email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} autoFocus />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="password">Password</Label>

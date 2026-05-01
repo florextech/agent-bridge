@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
-import { TelegramLogo, UserCheck, UserMinus, Copy, Check } from '@phosphor-icons/react';
+import { TelegramLogo, UserCheck, UserMinus, Copy, Check, Envelope, UserPlus, Trash, Shield } from '@phosphor-icons/react';
 import { ChannelType } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
 import type { TelegramUser } from '@/lib/api';
+import type { AppUser } from '@/lib/api';
 
 export default function SettingsPage() {
   const [botToken, setBotToken] = useState('');
@@ -131,6 +132,9 @@ export default function SettingsPage() {
           <QuickSession botToken={botToken} />
         </div>
       )}
+
+      {/* Users */}
+      <UsersSection />
     </div>
   );
 }
@@ -268,5 +272,100 @@ function CopyBlock({ label, value, copied, onCopy }: { label: string; value: str
         </button>
       </div>
     </div>
+  );
+}
+
+function UsersSection() {
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('member');
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  useEffect(() => {
+    bridgeApi.getUsers().then(setUsers).catch(() => {});
+  }, []);
+
+  const sendInvite = async () => {
+    if (!inviteEmail) return;
+    setResult(null);
+    try {
+      await bridgeApi.invite({ email: inviteEmail, role: inviteRole });
+      setResult({ ok: true, msg: `Invitation sent to ${inviteEmail}` });
+      setInviteEmail('');
+    } catch (err) {
+      setResult({ ok: false, msg: err instanceof Error ? err.message : 'Failed to send invitation' });
+    }
+  };
+
+  const removeUser = async (id: string) => {
+    await bridgeApi.deleteUser(id);
+    setUsers(await bridgeApi.getUsers());
+  };
+
+  return (
+    <>
+      <div>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-2">Team</p>
+        <Heading as="h2" size="lg">Users</Heading>
+        <Text variant="muted" size="sm">Manage team members and send invitations.</Text>
+      </div>
+
+      <div className="flx-card">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="size-10 rounded-xl bg-[rgb(118_183_61/0.15)] flex items-center justify-center">
+            <Envelope size={22} weight="duotone" className="text-(--brand-600)" />
+          </div>
+          <div>
+            <p className="font-display font-semibold">Invite Member</p>
+            <Text variant="muted" size="xs">Send an email invitation</Text>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="inviteEmail">Email</Label>
+            <Input id="inviteEmail" type="email" placeholder="user@example.com" value={inviteEmail} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInviteEmail(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="inviteRole">Role</Label>
+            <select id="inviteRole" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="px-3 py-2 rounded-xl bg-(--surface-muted) border border-(--border) text-sm text-(--foreground)">
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <Button onClick={sendInvite}><UserPlus size={16} weight="bold" className="mr-2" />Send Invitation</Button>
+          {result && <Alert variant={result.ok ? 'success' : 'danger'}>{result.msg}</Alert>}
+        </div>
+      </div>
+
+      <div className="flx-card">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="font-display font-semibold">Team Members</p>
+            <Text variant="muted" size="xs">{users.length} user(s)</Text>
+          </div>
+        </div>
+        {users.length === 0 ? (
+          <Text variant="muted" size="sm">No users yet.</Text>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {users.map((u) => (
+              <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl bg-(--surface-muted) border border-(--border)">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{u.name || u.email}</p>
+                  <p className="text-xs text-(--muted)">{u.email}</p>
+                </div>
+                <Badge tone={u.role === 'admin' ? 'brand' : 'neutral'}>
+                  {u.role === 'admin' && <Shield size={12} weight="bold" className="mr-1" />}
+                  {u.role}
+                </Badge>
+                <button onClick={() => removeUser(u.id)} className="p-2 rounded-lg hover:bg-(--surface) transition-colors text-(--muted) hover:text-(--danger)" title="Remove">
+                  <Trash size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

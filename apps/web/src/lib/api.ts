@@ -19,6 +19,22 @@ export interface TelegramUser {
   linkedAt: string;
 }
 
+export interface AppUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  createdAt: string;
+}
+
+export interface InvitationResult {
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  expiresAt: string;
+}
+
 export const bridgeApi = {
   getSessions: () => api<Session[]>('/agent-sessions'),
   getSession: (id: string) => api<Session>(`/agent-sessions/${id}`),
@@ -39,4 +55,16 @@ export const bridgeApi = {
     api<{ ok: boolean; botUsername?: string; error?: string }>('/telegram/setup', { method: 'POST', body: JSON.stringify({ botToken }) }),
   getTelegramStatus: () =>
     api<{ connected: boolean; botUsername: string | null }>('/telegram/status'),
+  setupAdmin: (data: { email: string; name: string; password: string }) =>
+    api<AppUser>('/users/setup', { method: 'POST', body: JSON.stringify(data) }),
+  login: (data: { email: string; password: string }) =>
+    api<AppUser>('/users/login', { method: 'POST', body: JSON.stringify(data) }),
+  invite: (data: { email: string; role?: string }) =>
+    api<InvitationResult>('/users/invite', { method: 'POST', body: JSON.stringify(data) }),
+  acceptInvite: (data: { token: string; name: string; password: string }) =>
+    api<AppUser>('/users/accept-invite', { method: 'POST', body: JSON.stringify(data) }),
+  getUsers: () => api<AppUser[]>('/users'),
+  deleteUser: (id: string) =>
+    api<{ ok: true }>(`/users/${id}`, { method: 'DELETE' }),
+  getUserCount: () => api<{ count: number }>('/users/count'),
 };

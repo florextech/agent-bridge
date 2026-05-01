@@ -61,3 +61,25 @@ model TelegramUser {
 
   @@map("telegram_users")
 }
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String   @default("member")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Invitation {
+  id        String   @id @default(uuid())
+  email     String
+  role      String   @default("member")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("invitations")
+}
