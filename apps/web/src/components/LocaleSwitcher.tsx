@@ -12,8 +12,10 @@ export function LocaleSwitcher() {
 
   const toggle = () => {
     const next = locale === 'en' ? 'es' : 'en';
-    document.cookie = `locale=${next};path=/;max-age=31536000`;
-    window.location.reload();
+    document.cookie = `locale=${next};path=/;max-age=31536000;SameSite=Lax`;
+    setLocale(next);
+    // Full navigation forces server to re-read cookie
+    setTimeout(() => { window.location.href = window.location.pathname; }, 50);
   };
 
   if (!locale) return null;
