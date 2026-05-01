@@ -6,3 +6,6 @@ dist
 .next
 .turbo
 coverage
+*.db
+*.db-shm
+*.db-wal
