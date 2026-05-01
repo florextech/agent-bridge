@@ -26,7 +26,7 @@ function getArg(name) {
 
 const sessionId = getArg('session');
 const apiUrl = getArg('api') || 'http://localhost:3001';
-const interval = parseInt(getArg('interval') || '5', 10) * 1000;
+const interval = Number.parseInt(getArg('interval') || '5', 10) * 1000;
 const command = getArg('command');
 const once = args.includes('--once');
 
@@ -59,11 +59,11 @@ async function poll() {
     if (command) {
       const fullCommand = `${command} "${unread.map((r) => r.content).join(' | ')}"`;
       log(`🔄 Running: ${fullCommand}`);
-      const { execSync } = require('child_process');
+      const { execSync } = require('node:child_process');
       try {
         execSync(fullCommand, { stdio: 'inherit', timeout: 300000 });
       } catch (e) {
-        log(`⚠️ Command exited with error`);
+        log(`⚠️ Command exited with error: ${e.status || e.message}`);
       }
     }
   } catch (e) {
