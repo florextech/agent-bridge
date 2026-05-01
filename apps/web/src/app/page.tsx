@@ -20,7 +20,7 @@ export default function SessionsPage() {
 
   const active = sessions.filter((s) => s.status === 'active').length;
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Spinner /></div>;
+  if (loading) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
   if (error) return <Text variant="danger">{error}</Text>;
 
   return (

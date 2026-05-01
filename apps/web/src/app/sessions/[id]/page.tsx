@@ -32,7 +32,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   }, [id]);
 
   if (error) return <Text variant="danger">{error}</Text>;
-  if (!session) return <div className="flex items-center justify-center h-64"><Spinner /></div>;
+  if (!session) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
 
   const unread = responses.filter((r) => !r.read).length;
 
