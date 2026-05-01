@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import '@florexlabs/ui/florex.css';
 import './globals.css';
 
 export const metadata: Metadata = {
