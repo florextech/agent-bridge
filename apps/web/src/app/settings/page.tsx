@@ -137,19 +137,108 @@ export default function SettingsPage() {
 
 function QuickSession({ botToken }: { botToken: string }) {
   const [form, setForm] = useState({ projectName: '', agentName: '' });
-  const [msg, setMsg] = useState('');
+  const [session, setSession] = useState<{ id: string } | null>(null);
+  const [copiedKey, setCopiedKey] = useState('');
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const copy = (key: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(''), 2000);
+  };
+
   const create = async () => {
     const s = await bridgeApi.createSession({
-      projectName: form.projectName,
-      agentName: form.agentName,
+      projectName: form.projectName || 'my-project',
+      agentName: form.agentName || 'codex',
       channelType: ChannelType.Telegram,
       channelConfig: { botToken },
     });
-    setMsg(`Created: ${s.id}`);
+    setSession(s);
   };
+
+  const apiUrl = typeof window !== 'undefined'
+    ? window.location.origin.replace(':3000', ':3001')
+    : 'http://localhost:3001';
+
+  if (session) {
+    const curlExample = `curl -X POST ${apiUrl}/agent-events \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "sessionId": "${session.id}",
+    "type": "task_completed",
+    "payload": { "summary": "Describe what happened" }
+  }'`;
+
+    const sdkExample = `import { AgentBridgeClient } from '@agent-bridge/sdk';
+import { AgentEventType } from '@agent-bridge/core';
+
+const bridge = new AgentBridgeClient({ baseUrl: '${apiUrl}' });
+
+await bridge.sendEvent({
+  sessionId: '${session.id}',
+  type: AgentEventType.TaskCompleted,
+  payload: { summary: 'Describe what happened' },
+});
+
+// Check if the user responded via Telegram
+const responses = await bridge.getResponses('${session.id}');`;
+
+    const agentPrompt = `You have access to Agent Bridge for notifications.
+Session ID: ${session.id}
+API: ${apiUrl}
+
+When you complete a task, need review, need approval, hit an error, or finish tests, notify me:
+
+curl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"TYPE","payload":{"summary":"DESCRIPTION"}}'
+
+Event types: task_started, task_completed, needs_review, needs_approval, error, test_results, message
+
+To check if I responded: curl ${apiUrl}/agent-sessions/${session.id}/responses
+After reading: curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read`;
+
+    return (
+      <div className="flex flex-col gap-4">
+        <Alert variant="success">Session created! Use the instructions below to connect your agent.</Alert>
+
+        <CopyBlock label="Session ID" value={session.id} copied={copiedKey === 'id'} onCopy={() => copy('id', session.id)} />
+
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--brand-600)">Agent System Prompt</p>
+          <Text variant="muted" size="xs">Paste this into your agent&apos;s system prompt or instructions file</Text>
+          <div className="relative">
+            <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{agentPrompt}</pre>
+            <button onClick={() => copy('prompt', agentPrompt)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
+              {copiedKey === 'prompt' ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--muted)">curl example</p>
+          <div className="relative">
+            <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{curlExample}</pre>
+            <button onClick={() => copy('curl', curlExample)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
+              {copiedKey === 'curl' ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--muted)">SDK example</p>
+          <div className="relative">
+            <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{sdkExample}</pre>
+            <button onClick={() => copy('sdk', sdkExample)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
+              {copiedKey === 'sdk' ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+
+        <Button variant="ghost" onClick={() => setSession(null)}>Create another session</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -164,7 +253,20 @@ function QuickSession({ botToken }: { botToken: string }) {
         </div>
       </div>
       <Button onClick={create}>Create Session</Button>
-      {msg && <Alert variant="success">{msg}</Alert>}
+    </div>
+  );
+}
+
+function CopyBlock({ label, value, copied, onCopy }: { label: string; value: string; copied: boolean; onCopy: () => void }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--muted)">{label}</p>
+      <div className="flex items-center gap-2 p-3 rounded-xl bg-(--surface-muted) border border-(--border)">
+        <code className="flex-1 text-sm text-(--brand-600) truncate">{value}</code>
+        <button onClick={onCopy} className="p-2 rounded-lg hover:bg-(--surface) transition-colors text-(--muted) hover:text-(--foreground) shrink-0">
+          {copied ? <Check size={14} weight="bold" className="text-(--brand-600)" /> : <Copy size={14} />}
+        </button>
+      </div>
     </div>
   );
 }
