@@ -19,7 +19,7 @@ export class TelegramProvider implements MessagingProvider {
     const explicitChatId = config['chatId'] as string | undefined;
     const targets = explicitChatId
       ? [explicitChatId]
-      : this.users.findAuthorized().map((u) => u.chatId);
+      : (await this.users.findAuthorized()).map((u) => u.chatId);
 
     if (targets.length === 0) {
       this.logger.warn('No authorized Telegram users to notify');

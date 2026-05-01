@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id            String   @id @default(uuid())
+  projectName   String   @map("project_name")
+  agentName     String   @map("agent_name")
+  status        String   @default("active")
+  channelType   String   @map("channel_type")
+  channelConfig Json     @default("{}") @map("channel_config")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  events    AgentEvent[]
+  responses ChannelResponse[]
+
+  @@map("sessions")
+}
+
+model AgentEvent {
+  id             String   @id @default(uuid())
+  sessionId      String   @map("session_id")
+  type           String
+  payload        Json     @default("{}")
+  deliveryStatus String   @default("pending") @map("delivery_status")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  session   Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  responses ChannelResponse[]
+
+  @@map("agent_events")
+}
+
+model ChannelResponse {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  eventId   String   @map("event_id")
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  event   AgentEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("channel_responses")
+}
+
+model TelegramUser {
+  id         Int      @id @default(autoincrement())
+  chatId     String   @unique @map("chat_id")
+  username   String?
+  firstName  String?  @map("first_name")
+  authorized Boolean  @default(true)
+  linkedAt   DateTime @default(now()) @map("linked_at")
+
+  @@map("telegram_users")
+}

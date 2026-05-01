@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { getDb } from '../database';
+import { PrismaService } from '../prisma.service';
 
 export interface TelegramUser {
   chatId: string;
@@ -9,58 +9,43 @@ export interface TelegramUser {
   linkedAt: string;
 }
 
-interface RawTelegramUser {
-  chat_id: string;
-  username: string | null;
-  first_name: string | null;
-  authorized: number;
-  linked_at: string;
-}
-
 @Injectable()
 export class TelegramUsersService {
-  upsert(chatId: string, username: string | null, firstName: string | null): TelegramUser {
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO telegram_users (chat_id, username, first_name) VALUES (?, ?, ?)
-       ON CONFLICT(chat_id) DO UPDATE SET username = excluded.username, first_name = excluded.first_name`,
-    ).run(chatId, username, firstName);
-    return this.findByChatId(chatId)!;
+  constructor(private readonly prisma: PrismaService) {}
+
+  async upsert(chatId: string, username: string | null, firstName: string | null): Promise<TelegramUser> {
+    const row = await this.prisma.telegramUser.upsert({
+      where: { chatId },
+      create: { chatId, username, firstName },
+      update: { username, firstName },
+    });
+    return toUser(row);
   }
 
-  findAll(): TelegramUser[] {
-    const db = getDb();
-    return (db.prepare(`SELECT * FROM telegram_users ORDER BY linked_at DESC`).all() as RawTelegramUser[]).map(toUser);
+  async findAll(): Promise<TelegramUser[]> {
+    const rows = await this.prisma.telegramUser.findMany({ orderBy: { linkedAt: 'desc' } });
+    return rows.map(toUser);
   }
 
-  findAuthorized(): TelegramUser[] {
-    const db = getDb();
-    return (db.prepare(`SELECT * FROM telegram_users WHERE authorized = 1 ORDER BY linked_at DESC`).all() as RawTelegramUser[]).map(toUser);
+  async findAuthorized(): Promise<TelegramUser[]> {
+    const rows = await this.prisma.telegramUser.findMany({ where: { authorized: true }, orderBy: { linkedAt: 'desc' } });
+    return rows.map(toUser);
   }
 
-  findByChatId(chatId: string): TelegramUser | null {
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM telegram_users WHERE chat_id = ?`).get(chatId) as RawTelegramUser | undefined;
+  async findByChatId(chatId: string): Promise<TelegramUser | null> {
+    const row = await this.prisma.telegramUser.findUnique({ where: { chatId } });
     return row ? toUser(row) : null;
   }
 
-  setAuthorized(chatId: string, authorized: boolean): void {
-    const db = getDb();
-    db.prepare(`UPDATE telegram_users SET authorized = ? WHERE chat_id = ?`).run(authorized ? 1 : 0, chatId);
+  async setAuthorized(chatId: string, authorized: boolean): Promise<void> {
+    await this.prisma.telegramUser.update({ where: { chatId }, data: { authorized } });
   }
 
-  remove(chatId: string): void {
-    const db = getDb();
-    db.prepare(`DELETE FROM telegram_users WHERE chat_id = ?`).run(chatId);
+  async remove(chatId: string): Promise<void> {
+    await this.prisma.telegramUser.delete({ where: { chatId } });
   }
 }
 
-function toUser(row: RawTelegramUser): TelegramUser {
-  return {
-    chatId: row.chat_id,
-    username: row.username,
-    firstName: row.first_name,
-    authorized: row.authorized === 1,
-    linkedAt: row.linked_at,
-  };
+function toUser(row: { chatId: string; username: string | null; firstName: string | null; authorized: boolean; linkedAt: Date }): TelegramUser {
+  return { chatId: row.chatId, username: row.username, firstName: row.firstName, authorized: row.authorized, linkedAt: row.linkedAt.toISOString() };
 }

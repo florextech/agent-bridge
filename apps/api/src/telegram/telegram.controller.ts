@@ -44,27 +44,27 @@ export class TelegramController {
   }
 
   @Post('webhook')
-  handleWebhook(@Body() update: TelegramUpdate): { ok: true } {
-    this.processUpdate(update);
+  async handleWebhook(@Body() update: TelegramUpdate): Promise<{ ok: true }> {
+    await this.processUpdate(update);
     return { ok: true };
   }
 
   @Get('users')
-  findAll(): TelegramUser[] {
+  findAll(): Promise<TelegramUser[]> {
     return this.users.findAll();
   }
 
   @Post('users/:chatId/authorize')
-  authorize(@Param('chatId') chatId: string): TelegramUser | null {
-    const user = this.users.findByChatId(chatId);
+  async authorize(@Param('chatId') chatId: string): Promise<TelegramUser | null> {
+    const user = await this.users.findByChatId(chatId);
     if (!user) return null;
-    this.users.setAuthorized(chatId, !user.authorized);
+    await this.users.setAuthorized(chatId, !user.authorized);
     return this.users.findByChatId(chatId);
   }
 
   @Delete('users/:chatId')
-  remove(@Param('chatId') chatId: string): { ok: true } {
-    this.users.remove(chatId);
+  async remove(@Param('chatId') chatId: string): Promise<{ ok: true }> {
+    await this.users.remove(chatId);
     return { ok: true };
   }
 
@@ -91,14 +91,14 @@ export class TelegramController {
 
       for (const update of data.result) {
         this.lastUpdateId = update.update_id;
-        this.processUpdate(update);
+        await this.processUpdate(update);
       }
     } catch {
       // silent retry
     }
   }
 
-  private processUpdate(update: TelegramUpdate): void {
+  private async processUpdate(update: TelegramUpdate): Promise<void> {
     const msg = update.message;
     if (!msg?.text) return;
 
@@ -107,23 +107,22 @@ export class TelegramController {
     const firstName = msg.chat.first_name || null;
 
     if (msg.text === '/start') {
-      this.users.upsert(chatId, username, firstName);
+      await this.users.upsert(chatId, username, firstName);
       this.logger.log(`User linked: ${firstName || username || chatId} (${chatId})`);
       this.sendReply(chatId, `✅ *Linked!*\n\nYou'll now receive agent notifications here.\n\n_Agent Bridge_`);
       return;
     }
 
-    // Save as response to the latest active session
-    const session = this.sessions.findLatestActive();
+    const session = await this.sessions.findLatestActive();
     if (!session) {
       this.logger.warn(`Response from ${chatId} but no active session`);
       return;
     }
 
-    const eventId = this.sessions.getLastEventId(session.id);
+    const eventId = await this.sessions.getLastEventId(session.id);
     if (!eventId) return;
 
-    this.sessions.addResponse(session.id, eventId, msg.text);
+    await this.sessions.addResponse(session.id, eventId, msg.text);
     this.logger.log(`Response saved from ${firstName || chatId}: "${msg.text}" → session ${session.id}`);
     this.sendReply(chatId, `📨 Response saved to *${session.projectName}*`);
   }

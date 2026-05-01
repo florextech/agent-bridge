@@ -1,119 +1,84 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 import type { ChannelResponse, CreateSessionDto, Session } from '@agent-bridge/core';
-import { getDb } from '../database';
+import type { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class SessionsService {
-  create(dto: CreateSessionDto): Session {
-    const db = getDb();
-    const id = randomUUID();
-    db.prepare(
-      `INSERT INTO sessions (id, project_name, agent_name, channel_type, channel_config) VALUES (?, ?, ?, ?, ?)`,
-    ).run(id, dto.projectName, dto.agentName, dto.channelType, JSON.stringify(dto.channelConfig));
-    return this.findById(id)!;
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(dto: CreateSessionDto): Promise<Session> {
+    const row = await this.prisma.session.create({
+      data: {
+        projectName: dto.projectName,
+        agentName: dto.agentName,
+        channelType: dto.channelType,
+        channelConfig: dto.channelConfig as Prisma.InputJsonValue,
+      },
+    });
+    return toSession(row);
   }
 
-  findAll(): Session[] {
-    const db = getDb();
-    return (db.prepare(`SELECT * FROM sessions ORDER BY updated_at DESC`).all() as RawSession[]).map(toSession);
+  async findAll(): Promise<Session[]> {
+    const rows = await this.prisma.session.findMany({ orderBy: { updatedAt: 'desc' } });
+    return rows.map(toSession);
   }
 
-  findById(id: string): Session | null {
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM sessions WHERE id = ?`).get(id) as RawSession | undefined;
+  async findById(id: string): Promise<Session | null> {
+    const row = await this.prisma.session.findUnique({ where: { id } });
     return row ? toSession(row) : null;
   }
 
-  findLatestActive(): Session | null {
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM sessions WHERE status = 'active' ORDER BY updated_at DESC LIMIT 1`).get() as RawSession | undefined;
+  async findLatestActive(): Promise<Session | null> {
+    const row = await this.prisma.session.findFirst({ where: { status: 'active' }, orderBy: { updatedAt: 'desc' } });
     return row ? toSession(row) : null;
   }
 
-  getLastEventId(sessionId: string): string | null {
-    const db = getDb();
-    const row = db.prepare(`SELECT id FROM agent_events WHERE session_id = ? ORDER BY created_at DESC LIMIT 1`).get(sessionId) as { id: string } | undefined;
-    return row?.id || null;
+  async getLastEventId(sessionId: string): Promise<string | null> {
+    const ev = await this.prisma.agentEvent.findFirst({ where: { sessionId }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+    return ev?.id || null;
   }
 
-  getResponses(sessionId: string): ChannelResponse[] {
-    const db = getDb();
-    const rows = db
-      .prepare(`SELECT * FROM channel_responses WHERE session_id = ? ORDER BY created_at ASC`)
-      .all(sessionId) as RawResponse[];
+  async getResponses(sessionId: string): Promise<ChannelResponse[]> {
+    const rows = await this.prisma.channelResponse.findMany({ where: { sessionId }, orderBy: { createdAt: 'asc' } });
     return rows.map(toResponse);
   }
 
-  addResponse(sessionId: string, eventId: string, content: string): ChannelResponse {
-    const db = getDb();
-    const id = randomUUID();
-    db.prepare(
-      `INSERT INTO channel_responses (id, session_id, event_id, content) VALUES (?, ?, ?, ?)`,
-    ).run(id, sessionId, eventId, content);
-    db.prepare(`UPDATE sessions SET updated_at = datetime('now') WHERE id = ?`).run(sessionId);
-    return this.getResponseById(id)!;
+  async addResponse(sessionId: string, eventId: string, content: string): Promise<ChannelResponse> {
+    const row = await this.prisma.channelResponse.create({ data: { sessionId, eventId, content } });
+    await this.prisma.session.update({ where: { id: sessionId }, data: { updatedAt: new Date() } });
+    return toResponse(row);
   }
 
-  markRead(sessionId: string): void {
-    const db = getDb();
-    db.prepare(`UPDATE channel_responses SET read = 1 WHERE session_id = ? AND read = 0`).run(sessionId);
+  async markRead(sessionId: string): Promise<void> {
+    await this.prisma.channelResponse.updateMany({ where: { sessionId, read: false }, data: { read: true } });
   }
 
-  remove(sessionId: string): void {
-    const db = getDb();
-    db.prepare(`DELETE FROM channel_responses WHERE session_id = ?`).run(sessionId);
-    db.prepare(`DELETE FROM agent_events WHERE session_id = ?`).run(sessionId);
-    db.prepare(`DELETE FROM sessions WHERE id = ?`).run(sessionId);
-  }
-
-  private getResponseById(id: string): ChannelResponse | null {
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM channel_responses WHERE id = ?`).get(id) as RawResponse | undefined;
-    return row ? toResponse(row) : null;
+  async remove(sessionId: string): Promise<void> {
+    await this.prisma.session.delete({ where: { id: sessionId } });
   }
 }
 
-interface RawSession {
-  id: string;
-  project_name: string;
-  agent_name: string;
-  status: string;
-  channel_type: string;
-  channel_config: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface RawResponse {
-  id: string;
-  session_id: string;
-  event_id: string;
-  content: string;
-  read: number;
-  created_at: string;
-}
-
-function toSession(row: RawSession): Session {
+function toSession(row: { id: string; projectName: string; agentName: string; status: string; channelType: string; channelConfig: unknown; createdAt: Date; updatedAt: Date }): Session {
   return {
     id: row.id,
-    projectName: row.project_name,
-    agentName: row.agent_name,
+    projectName: row.projectName,
+    agentName: row.agentName,
     status: row.status as Session['status'],
-    channelType: row.channel_type as Session['channelType'],
-    channelConfig: JSON.parse(row.channel_config) as Record<string, unknown>,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    channelType: row.channelType as Session['channelType'],
+    channelConfig: row.channelConfig as Record<string, unknown>,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-function toResponse(row: RawResponse): ChannelResponse {
+function toResponse(row: { id: string; sessionId: string; eventId: string; content: string; read: boolean; createdAt: Date }): ChannelResponse {
   return {
     id: row.id,
-    sessionId: row.session_id,
-    eventId: row.event_id,
+    sessionId: row.sessionId,
+    eventId: row.eventId,
     content: row.content,
-    read: row.read === 1,
-    createdAt: row.created_at,
+    read: row.read,
+    createdAt: row.createdAt.toISOString(),
   };
 }

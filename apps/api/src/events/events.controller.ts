@@ -14,23 +14,23 @@ export class EventsController {
   ) {}
 
   @Get()
-  findBySession(@Query('sessionId') sessionId: string): AgentEvent[] {
+  findBySession(@Query('sessionId') sessionId: string): Promise<AgentEvent[]> {
     return this.events.findBySession(sessionId);
   }
 
   @Post()
   async create(@Body() dto: CreateAgentEventDto): Promise<AgentEvent> {
-    const event = this.events.create(dto);
-    const session = this.sessions.findById(dto.sessionId);
+    const event = await this.events.create(dto);
+    const session = await this.sessions.findById(dto.sessionId);
     if (session) {
       const provider = this.providers.get(session.channelType);
       if (provider) {
         try {
           await provider.sendNotification(event, session.channelConfig);
-          this.events.updateDeliveryStatus(event.id, 'sent');
+          await this.events.updateDeliveryStatus(event.id, 'sent');
           return { ...event, deliveryStatus: DeliveryStatus.Sent };
         } catch {
-          this.events.updateDeliveryStatus(event.id, 'failed');
+          await this.events.updateDeliveryStatus(event.id, 'failed');
           return { ...event, deliveryStatus: DeliveryStatus.Failed };
         }
       }

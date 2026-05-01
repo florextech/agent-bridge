@@ -1,56 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 import type { AgentEvent, CreateAgentEventDto } from '@agent-bridge/core';
-import { getDb } from '../database';
+import type { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class EventsService {
-  create(dto: CreateAgentEventDto): AgentEvent {
-    const db = getDb();
-    const id = randomUUID();
-    db.prepare(
-      `INSERT INTO agent_events (id, session_id, type, payload) VALUES (?, ?, ?, ?)`,
-    ).run(id, dto.sessionId, dto.type, JSON.stringify(dto.payload));
+  constructor(private readonly prisma: PrismaService) {}
 
-    return this.findById(id)!;
+  async create(dto: CreateAgentEventDto): Promise<AgentEvent> {
+    const row = await this.prisma.agentEvent.create({
+      data: { sessionId: dto.sessionId, type: dto.type, payload: dto.payload as Prisma.InputJsonValue },
+    });
+    return toEvent(row);
   }
 
-  findBySession(sessionId: string): AgentEvent[] {
-    const db = getDb();
-    const rows = db
-      .prepare(`SELECT * FROM agent_events WHERE session_id = ? ORDER BY created_at ASC`)
-      .all(sessionId) as RawEvent[];
-    return rows.map(toAgentEvent);
+  async findBySession(sessionId: string): Promise<AgentEvent[]> {
+    const rows = await this.prisma.agentEvent.findMany({ where: { sessionId }, orderBy: { createdAt: 'asc' } });
+    return rows.map(toEvent);
   }
 
-  findById(id: string): AgentEvent | null {
-    const db = getDb();
-    const row = db.prepare(`SELECT * FROM agent_events WHERE id = ?`).get(id) as RawEvent | undefined;
-    return row ? toAgentEvent(row) : null;
-  }
-
-  updateDeliveryStatus(id: string, status: string): void {
-    const db = getDb();
-    db.prepare(`UPDATE agent_events SET delivery_status = ? WHERE id = ?`).run(status, id);
+  async updateDeliveryStatus(id: string, status: string): Promise<void> {
+    await this.prisma.agentEvent.update({ where: { id }, data: { deliveryStatus: status } });
   }
 }
 
-interface RawEvent {
-  id: string;
-  session_id: string;
-  type: string;
-  payload: string;
-  delivery_status: string;
-  created_at: string;
-}
-
-function toAgentEvent(row: RawEvent): AgentEvent {
+function toEvent(row: { id: string; sessionId: string; type: string; payload: unknown; deliveryStatus: string; createdAt: Date }): AgentEvent {
   return {
     id: row.id,
-    sessionId: row.session_id,
+    sessionId: row.sessionId,
     type: row.type as AgentEvent['type'],
-    payload: JSON.parse(row.payload) as Record<string, unknown>,
-    deliveryStatus: row.delivery_status as AgentEvent['deliveryStatus'],
-    createdAt: row.created_at,
+    payload: row.payload as Record<string, unknown>,
+    deliveryStatus: row.deliveryStatus as AgentEvent['deliveryStatus'],
+    createdAt: row.createdAt.toISOString(),
   };
 }

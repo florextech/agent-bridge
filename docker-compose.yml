@@ -1,4 +1,15 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bridge
+      POSTGRES_PASSWORD: bridge
+      POSTGRES_DB: agent_bridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   api:
     build:
       context: .
@@ -6,10 +17,10 @@ services:
     ports:
       - "3001:3001"
     env_file: .env
-    volumes:
-      - api-data:/app/data
     environment:
-      - DB_PATH=/app/data/agent-bridge.db
+      DATABASE_URL: postgresql://bridge:bridge@db:5432/agent_bridge
+    depends_on:
+      - db
 
   web:
     build:
@@ -22,4 +33,4 @@ services:
       - api
 
 volumes:
-  api-data:
+  pgdata:
