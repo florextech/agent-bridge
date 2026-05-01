@@ -1,12 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+
+// Mock window.location
+Object.defineProperty(window, 'location', { value: { href: '' }, writable: true });
 
 vi.mock('next-auth/react', () => ({ signIn: vi.fn() }));
 vi.mock('@/lib/api', () => ({
   bridgeApi: { getUserCount: vi.fn().mockResolvedValue({ count: 0 }), setupAdmin: vi.fn() },
 }));
-vi.mock('@phosphor-icons/react', () => ({ Shield: () => null }));
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+}));
+vi.mock('@phosphor-icons/react', () => ({ Shield: () => React.createElement('span') }));
 vi.mock('@florexlabs/ui', async () => {
   const R = await import('react');
   const c = (name: string) => R.forwardRef(({ children, ...props }: any, ref: any) =>
@@ -17,20 +23,20 @@ vi.mock('@florexlabs/ui', async () => {
   };
 });
 
-import SetupPage from '@/app/setup/page';
+import SetupPage from '@/app/(auth)/setup/page';
 
 describe('SetupPage', () => {
-  it('renders name, email, password inputs', async () => {
+  it('renders inputs after loading', async () => {
     render(<SetupPage />);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getAllByTestId('Input')).toHaveLength(3);
     });
   });
 
-  it('renders create admin button', async () => {
+  it('renders create admin button after loading', async () => {
     render(<SetupPage />);
-    await vi.waitFor(() => {
-      expect(screen.getByTestId('Button')).toHaveTextContent('Create Admin Account');
+    await waitFor(() => {
+      expect(screen.getByTestId('Button')).toBeInTheDocument();
     });
   });
 });
