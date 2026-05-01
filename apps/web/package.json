@@ -6,7 +6,9 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "clean": "rm -rf .next"
+    "clean": "rm -rf .next",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@agent-bridge/core": "workspace:*",
@@ -21,6 +23,7 @@
     "resend": "4.5.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.52.0",
     "@tailwindcss/postcss": "4.1.7",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",

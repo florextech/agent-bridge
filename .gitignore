@@ -10,3 +10,5 @@ coverage
 *.db-shm
 *.db-wal
 src/generated
+test-results
+playwright-report
