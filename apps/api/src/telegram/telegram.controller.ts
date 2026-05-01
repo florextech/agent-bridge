@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post } from '@nestjs/common';
 import { TelegramUsersService } from './telegram-users.service';
+import { SessionsService } from '../sessions/sessions.service';
 import type { TelegramUser } from './telegram-users.service';
 
 interface TelegramUpdate {
@@ -17,13 +18,14 @@ export class TelegramController {
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
   private lastUpdateId = 0;
 
-  constructor(private readonly users: TelegramUsersService) {
-    // Auto-start polling if env var is set
+  constructor(
+    private readonly users: TelegramUsersService,
+    private readonly sessions: SessionsService,
+  ) {
     const envToken = process.env['TELEGRAM_BOT_TOKEN'];
     if (envToken) this.startPolling(envToken);
   }
 
-  /** Setup bot: saves token, starts polling, returns bot username */
   @Post('setup')
   async setup(@Body() body: { botToken: string }): Promise<{ ok: boolean; botUsername?: string; error?: string }> {
     try {
@@ -39,7 +41,6 @@ export class TelegramController {
     }
   }
 
-  /** Webhook endpoint (for production with HTTPS) */
   @Post('webhook')
   handleWebhook(@Body() update: TelegramUpdate): { ok: true } {
     this.processUpdate(update);
@@ -74,9 +75,8 @@ export class TelegramController {
     if (this.pollingTimer) clearInterval(this.pollingTimer);
     this.botToken = token;
     this.logger.log('Telegram polling started');
-
     this.pollingTimer = setInterval(() => this.poll(), 3000);
-    this.poll(); // immediate first poll
+    this.poll();
   }
 
   private async poll(): Promise<void> {
@@ -92,13 +92,13 @@ export class TelegramController {
         this.processUpdate(update);
       }
     } catch {
-      // silent — will retry next interval
+      // silent retry
     }
   }
 
   private processUpdate(update: TelegramUpdate): void {
     const msg = update.message;
-    if (!msg) return;
+    if (!msg?.text) return;
 
     const chatId = String(msg.chat.id);
     const username = msg.chat.username || null;
@@ -107,18 +107,31 @@ export class TelegramController {
     if (msg.text === '/start') {
       this.users.upsert(chatId, username, firstName);
       this.logger.log(`User linked: ${firstName || username || chatId} (${chatId})`);
-
-      if (this.botToken) {
-        fetch(`https://api.telegram.org/bot${this.botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: `✅ *Linked!*\n\nYou'll now receive agent notifications here.\n\n_Agent Bridge_`,
-            parse_mode: 'Markdown',
-          }),
-        }).catch(() => {});
-      }
+      this.sendReply(chatId, `✅ *Linked!*\n\nYou'll now receive agent notifications here.\n\n_Agent Bridge_`);
+      return;
     }
+
+    // Save as response to the latest active session
+    const session = this.sessions.findLatestActive();
+    if (!session) {
+      this.logger.warn(`Response from ${chatId} but no active session`);
+      return;
+    }
+
+    const eventId = this.sessions.getLastEventId(session.id);
+    if (!eventId) return;
+
+    this.sessions.addResponse(session.id, eventId, msg.text);
+    this.logger.log(`Response saved from ${firstName || chatId}: "${msg.text}" → session ${session.id}`);
+    this.sendReply(chatId, `📨 Response saved to *${session.projectName}*`);
+  }
+
+  private sendReply(chatId: string, text: string): void {
+    if (!this.botToken) return;
+    fetch(`https://api.telegram.org/bot${this.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+    }).catch(() => {});
   }
 }

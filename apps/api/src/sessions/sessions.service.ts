@@ -25,6 +25,18 @@ export class SessionsService {
     return row ? toSession(row) : null;
   }
 
+  findLatestActive(): Session | null {
+    const db = getDb();
+    const row = db.prepare(`SELECT * FROM sessions WHERE status = 'active' ORDER BY updated_at DESC LIMIT 1`).get() as RawSession | undefined;
+    return row ? toSession(row) : null;
+  }
+
+  getLastEventId(sessionId: string): string | null {
+    const db = getDb();
+    const row = db.prepare(`SELECT id FROM agent_events WHERE session_id = ? ORDER BY created_at DESC LIMIT 1`).get(sessionId) as { id: string } | undefined;
+    return row?.id || null;
+  }
+
   getResponses(sessionId: string): ChannelResponse[] {
     const db = getDb();
     const rows = db
