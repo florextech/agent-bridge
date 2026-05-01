@@ -5,6 +5,11 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
+  @Get('count')
+  async getCount() {
+    return { count: await this.users.count() };
+  }
+
   @Post('setup')
   async setup(@Body() body: { email: string; name: string; password: string }) {
     const count = await this.users.count();
@@ -39,10 +44,5 @@ export class UsersController {
   async remove(@Param('id') id: string) {
     await this.users.remove(id);
     return { ok: true };
-  }
-
-  @Get('count')
-  async getCount() {
-    return { count: await this.users.count() };
   }
 }
