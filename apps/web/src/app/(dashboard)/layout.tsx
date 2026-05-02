@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Gear, List, X } from '@phosphor-icons/react';
+import { ListChecks, Gear, List, X, Terminal } from '@phosphor-icons/react';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { Logo } from '@/components/Logo';
 import { useI18n } from '@/lib/i18n';
@@ -56,6 +56,7 @@ function NavLinks({ onNavigate }: { onNavigate: () => void }) {
   const links = [
     { href: '/', icon: <ListChecks size={18} />, label: t('nav.sessions') },
     { href: '/settings', icon: <Gear size={18} />, label: t('nav.settings') },
+    { href: '/terminal', icon: <Terminal size={18} />, label: t('nav.terminal') },
   ];
 
   return (

@@ -1,6 +1,6 @@
 {
   "common": { "appName": "Agent Bridge", "version": "v0.1.0" },
-  "nav": { "sessions": "Sessions", "settings": "Settings", "integration": "Integration" },
+  "nav": { "sessions": "Sessions", "settings": "Settings", "terminal": "Terminal" },
   "auth": {
     "signIn": "Sign In",
     "signInDesc": "Sign in to access the dashboard.",
