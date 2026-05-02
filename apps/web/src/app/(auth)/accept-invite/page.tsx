@@ -12,7 +12,7 @@ import { bridgeApi } from '@/lib/api';
 function AcceptInviteForm() {
   const { t } = useI18n();
   const searchParams = useSearchParams();
-  const token = searchParams.get('auth.token') || '';
+  const token = searchParams.get('auth.token') ?? '';
   const [form, setForm] = useState({ name: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);

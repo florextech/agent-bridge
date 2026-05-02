@@ -120,7 +120,7 @@ function TerminalPanel() {
       fitAddon.fit();
       setTimeout(() => fitAddon.fit(), 150);
 
-      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace('http', 'ws');
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace('http', 'ws');
       const ws = new WebSocket(`${apiUrl}/ws/terminal`);
 
       ws.onopen = () => {

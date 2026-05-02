@@ -15,7 +15,7 @@ async function bootstrap(): Promise<void> {
     .build();
   SwaggerModule.setup('docs', app, () => SwaggerModule.createDocument(app, config));
 
-  const port = process.env['PORT'] || 3001;
+  const port = process.env['PORT'] ?? 3001;
   await app.listen(port);
   console.log(`agent-bridge API running on http://localhost:${port}`);
   console.log(`Swagger docs at http://localhost:${port}/docs`);

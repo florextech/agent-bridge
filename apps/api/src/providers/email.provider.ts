@@ -11,7 +11,7 @@ export class EmailProvider implements MessagingProvider {
   async sendNotification(event: AgentEvent, config: Record<string, unknown>): Promise<void> {
     const apiKey = (config['resendApiKey'] as string | undefined)?.trim() || process.env['RESEND_API_KEY'];
     const to = config['to'] as string | undefined;
-    const from = (config['from'] as string | undefined) || process.env['RESEND_FROM'] || 'Agent Bridge <noreply@resend.dev>';
+    const from = (config['from'] as string | undefined) ?? process.env['RESEND_FROM'] ?? 'Agent Bridge <noreply@resend.dev>';
 
     if (!apiKey || !to) {
       this.logger.warn('Email skipped: missing RESEND_API_KEY or recipient');

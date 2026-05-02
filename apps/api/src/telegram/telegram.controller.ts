@@ -92,7 +92,7 @@ export class TelegramController implements OnModuleInit {
     if (this.botUsername) return { connected: true, botUsername: this.botUsername };
     // Check DB
     const saved = await this.prisma.appSetting.findUnique({ where: { key: 'telegram_bot_username' } });
-    return { connected: this.botToken !== null, botUsername: saved?.value || null };
+    return { connected: this.botToken !== null, botUsername: saved?.value ?? null };
   }
 
   private async connectBot(token: string): Promise<string | null> {
@@ -100,7 +100,7 @@ export class TelegramController implements OnModuleInit {
     const data = await res.json() as { ok: boolean; result?: { username: string }; description?: string };
     if (!data.ok) return null;
 
-    this.botUsername = data.result?.username || null;
+    this.botUsername = data.result?.username ?? null;
     TelegramProvider.setupToken = token;
     this.startPolling(token);
     return this.botUsername;
@@ -136,8 +136,8 @@ export class TelegramController implements OnModuleInit {
     if (!msg?.text) return;
 
     const chatId = String(msg.chat.id);
-    const username = msg.chat.username || null;
-    const firstName = msg.chat.first_name || null;
+    const username = msg.chat.username ?? null;
+    const firstName = msg.chat.first_name ?? null;
 
     if (msg.text === '/start') {
       await this.users.upsert(chatId, username, firstName);
@@ -168,6 +168,6 @@ export class TelegramController implements OnModuleInit {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
-    }).catch(() => {});
+    }).catch(() => { /* fire-and-forget: delivery failure is non-critical */ });
   }
 }

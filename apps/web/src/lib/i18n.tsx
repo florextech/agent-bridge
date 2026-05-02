@@ -28,7 +28,7 @@ export function I18nProvider({ initialLocale, children }: { initialLocale: strin
   const t: TFunc = useCallback((key: string) => {
     const [ns, ...rest] = key.split('.');
     const k = rest.join('.');
-    return messages[locale]?.[ns!]?.[k] || key;
+    return messages[locale]?.[ns!]?.[k] ?? key;
   }, [locale]);
 
   return (

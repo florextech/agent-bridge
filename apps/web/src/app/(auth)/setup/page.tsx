@@ -15,7 +15,7 @@ export default function SetupPage() {
   const { data, isLoading } = useUserCount();
 
   useEffect(() => {
-    if (data && data.count > 0) globalThis.location.href = '/login';
+    if (data?.count && data.count > 0) globalThis.location.href = '/login';
   }, [data]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -34,7 +34,7 @@ export default function SetupPage() {
     }
   };
 
-  if (isLoading || (data && data.count > 0)) return null;
+  if (isLoading || (data?.count && data.count > 0)) return null;
 
   return (
     <div className="flx-card w-full max-w-sm">

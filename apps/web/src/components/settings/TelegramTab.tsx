@@ -40,7 +40,7 @@ export function TelegramTab({ botToken, onBotTokenChange }: { botToken: string; 
         if (res.ok && res.botUsername) {
           dispatch({ type: 'SET_RESULT', payload: { ok: true, msg: `Connected to @${res.botUsername}!` } });
         } else {
-          dispatch({ type: 'SET_RESULT', payload: { ok: false, msg: res.error || 'Failed' } });
+          dispatch({ type: 'SET_RESULT', payload: { ok: false, msg: res.error ?? 'Failed' } });
         }
       },
       onError: (err) => dispatch({ type: 'SET_RESULT', payload: { ok: false, msg: err.message } }),

@@ -27,7 +27,7 @@ export class UsersController {
 
   @Post('invite')
   async invite(@Body() body: { email: string; role?: string }) {
-    return this.users.invite(body.email, body.role || 'member');
+    return this.users.invite(body.email, body.role ?? 'member');
   }
 
   @Post('accept-invite')

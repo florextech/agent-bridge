@@ -24,7 +24,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.logger.log('Browser client connected');
     // Try to pair with an available agent
     const agent = this.availableAgents.shift();
-    if (agent && agent.readyState === 1) {
+    if (agent?.readyState === 1) {
       this.pair(client, agent);
     } else {
       this.pendingClients.push(client);
@@ -45,7 +45,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('input')
   handleInput(client: WebSocket, payload: string): void {
     const agent = this.clientToAgent.get(client);
-    if (agent && agent.readyState === 1) {
+    if (agent?.readyState === 1) {
       agent.send(JSON.stringify({ event: 'input', data: payload }));
     }
   }
@@ -53,7 +53,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('exec')
   handleExec(client: WebSocket, payload: string): void {
     const agent = this.clientToAgent.get(client);
-    if (agent && agent.readyState === 1) {
+    if (agent?.readyState === 1) {
       agent.send(JSON.stringify({ event: 'exec', data: payload }));
     }
   }
@@ -62,7 +62,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   handleResize(client: WebSocket, payload: string | { cols: number; rows: number }): void {
     const data = typeof payload === 'string' ? JSON.parse(payload) as { cols: number; rows: number } : payload;
     const agent = this.clientToAgent.get(client);
-    if (agent && agent.readyState === 1 && data?.cols && data?.rows) {
+    if (agent?.readyState === 1 && data?.cols && data?.rows) {
       agent.send(JSON.stringify({ event: 'resize', cols: data.cols, rows: data.rows }));
     }
   }
@@ -72,7 +72,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     // Pair with a pending client or add to pool
     const client = this.pendingClients.shift();
-    if (client && client.readyState === 1) {
+    if (client?.readyState === 1) {
       this.pair(client, ws);
     } else {
       this.availableAgents.push(ws);

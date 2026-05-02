@@ -30,9 +30,9 @@ export class UsersService {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const invitation = await this.prisma.invitation.create({ data: { email, role, token, expiresAt } });
 
-    const webUrl = process.env['WEB_URL'] || 'http://localhost:3000';
+    const webUrl = process.env['WEB_URL'] ?? 'http://localhost:3000';
     const resendApiKey = process.env['RESEND_API_KEY'];
-    const resendFrom = process.env['RESEND_FROM'] || 'Agent Bridge <noreply@resend.dev>';
+    const resendFrom = process.env['RESEND_FROM'] ?? 'Agent Bridge <noreply@resend.dev>';
 
     if (resendApiKey) {
       const acceptUrl = `${webUrl}/accept-invite?token=${token}`;
@@ -45,7 +45,7 @@ export class UsersService {
           subject: "You're invited to Agent Bridge",
           html: this.invitationHtml(acceptUrl),
         }),
-      }).catch(() => {});
+      }).catch(() => { /* fire-and-forget: email delivery failure is non-critical */ });
     }
 
     return invitation;

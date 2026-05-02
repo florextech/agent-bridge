@@ -36,7 +36,7 @@ export class SessionsService {
 
   async getLastEventId(sessionId: string): Promise<string | null> {
     const ev = await this.prisma.agentEvent.findFirst({ where: { sessionId }, orderBy: { createdAt: 'desc' }, select: { id: true } });
-    return ev?.id || null;
+    return ev?.id ?? null;
   }
 
   async getResponses(sessionId: string): Promise<ChannelResponse[]> {
