@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * Agent Bridge Runner — Remote terminal + AI + Command dispatcher
+ * Agent Bridge Runner — Remote terminal + Command dispatcher
  *
  * Usage:
+ *   node apps/runner.js --session <ID>
  *   node apps/runner.js --session <ID> --config commands.json
- *   node apps/runner.js --session <ID> --shell          # Enable remote shell
- *   node apps/runner.js --session <ID> --ai             # Enable AI assistant
- *   node apps/runner.js --session <ID> --shell --ai     # Both
+ *   node apps/runner.js --session <ID> --config commands.json --shell
  *
  * From Telegram:
  *   /test              → run configured command
  *   /build             → run configured command
  *   $ ls -la           → run shell command (if --shell enabled)
- *   $ git status       → run shell command
- *   ai: explain this error  → ask AI (if --ai enabled)
  *   hello              → default command or just log
+ *
+ * commands.json:
+ * {
+ *   "commands": { "test": "pnpm test", "build": "pnpm -r build" },
+ *   "default": "echo"
+ * }
  */
 
 const fs = require('node:fs');
@@ -33,8 +36,6 @@ const interval = Number.parseInt(getArg('interval') || '5', 10) * 1000;
 const configPath = getArg('config');
 const defaultCommand = getArg('command');
 const shellEnabled = args.includes('--shell');
-const aiEnabled = args.includes('--ai');
-const aiModel = getArg('ai-model') || 'gpt-4o-mini';
 const cwd = getArg('cwd') || process.cwd();
 const once = args.includes('--once');
 
@@ -48,8 +49,6 @@ Options:
   --config <file>     Command mappings JSON file
   --command <cmd>     Default command for plain messages
   --shell             Enable remote shell ($ prefix)
-  --ai                Enable AI assistant (ai: prefix)
-  --ai-model <model>  AI model (default: gpt-4o-mini)
   --cwd <path>        Working directory for commands
   --api <url>         API URL (default: http://localhost:3001)
   --interval <sec>    Poll interval (default: 5)
@@ -58,12 +57,10 @@ Options:
 Telegram commands:
   /cmd [args]         Run configured command
   $ command           Run shell command (requires --shell)
-  ai: question        Ask AI (requires --ai + OPENAI_API_KEY)
   plain text          Run default command or log`);
   process.exit(1);
 }
 
-// Load commands
 let commands = {};
 let fallbackCommand = defaultCommand || null;
 if (configPath) {
@@ -104,61 +101,17 @@ function runCommand(label, fullCommand) {
   }
 }
 
-async function askAI(question) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    sendEvent('error', '❌ OPENAI\\_API\\_KEY not set');
-    return;
-  }
-  log(`🤖 AI: ${question}`);
-  sendEvent('message', `🤖 *Thinking...*\n\n_${question}_`);
-
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: aiModel,
-        messages: [
-          { role: 'system', content: `You are a helpful DevOps assistant. You help with code, infrastructure, and development tasks. Keep responses concise (max 500 chars). If the user asks to run something, suggest the exact command. Working directory: ${cwd}` },
-          { role: 'user', content: question },
-        ],
-        max_tokens: 300,
-      }),
-    });
-    const data = await res.json();
-    const answer = data.choices?.[0]?.message?.content || 'No response';
-    log(`🤖 Response: ${answer.slice(0, 100)}...`);
-    sendEvent('message', `🤖 *AI*\n\n${answer}`);
-  } catch (e) {
-    sendEvent('error', `❌ AI error: ${e.message}`);
-  }
-}
-
 function processMessage(text) {
   const trimmed = text.trim();
 
-  // Shell command: $ ls -la
-  if (trimmed.startsWith('$') || trimmed.startsWith('> ')) {
-    const cmd = trimmed.slice(trimmed.startsWith('$ ') ? 2 : 2).trim();
+  // Shell: $ command
+  if (trimmed.startsWith('$ ') || trimmed.startsWith('> ')) {
+    const cmd = trimmed.slice(2).trim();
     if (!shellEnabled) {
-      sendEvent('error', '🔒 Shell not enabled. Start runner with `--shell`');
+      sendEvent('message', '🔒 Shell disabled. Start runner with `--shell`');
       return;
     }
-    if (!cmd) return;
-    runCommand(`$ ${cmd}`, cmd);
-    return;
-  }
-
-  // AI: ai: explain this
-  if (trimmed.toLowerCase().startsWith('ai:') || trimmed.toLowerCase().startsWith('ai ')) {
-    const question = trimmed.slice(trimmed.indexOf(':') !== -1 ? trimmed.indexOf(':') + 1 : 3).trim();
-    if (!aiEnabled) {
-      sendEvent('error', '🔒 AI not enabled. Start runner with `--ai`');
-      return;
-    }
-    if (!question) return;
-    askAI(question);
+    if (cmd) runCommand(`$ ${cmd}`, cmd);
     return;
   }
 
@@ -169,10 +122,10 @@ function processMessage(text) {
     const cmdArgs = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx + 1).trim();
 
     if (commands[cmd]) {
-      const template = commands[cmd];
-      runCommand(`/${cmd}`, cmdArgs ? `${template} "${cmdArgs}"` : template);
+      runCommand(`/${cmd}`, cmdArgs ? `${commands[cmd]} "${cmdArgs}"` : commands[cmd]);
     } else {
-      sendEvent('message', `⚠️ Unknown command: /${cmd}\n\nAvailable: ${Object.keys(commands).map(c => '/' + c).join(', ') || 'none'}`);
+      const available = Object.keys(commands).map(c => '/' + c).join(', ');
+      sendEvent('message', `⚠️ Unknown: /${cmd}\n\nAvailable: ${available || 'none (use --config)'}`);
     }
     return;
   }
@@ -207,14 +160,10 @@ async function poll() {
   }
 }
 
-// Startup
 log('🚀 Agent Bridge Runner');
 log(`   Session:  ${sessionId}`);
-log(`   API:      ${apiUrl}`);
 log(`   CWD:      ${cwd}`);
-log(`   Interval: ${interval / 1000}s`);
-log(`   Shell:    ${shellEnabled ? '✅ enabled' : '🔒 disabled'}`);
-log(`   AI:       ${aiEnabled ? '✅ enabled (' + aiModel + ')' : '🔒 disabled'}`);
+log(`   Shell:    ${shellEnabled ? '✅' : '🔒'}`);
 if (Object.keys(commands).length > 0) log(`   Commands: ${Object.keys(commands).map(c => '/' + c).join(', ')}`);
 if (fallbackCommand) log(`   Default:  ${fallbackCommand}`);
 log('');
