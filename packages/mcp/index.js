@@ -60,10 +60,12 @@ server.tool(
       return { content: [{ type: "text", text: "No new responses from the user." }] };
     }
 
+    const lines = unread.map((r) => "- " + r.content).join("\n");
+
     return {
       content: [{
         type: "text",
-        text: `${unread.length} response(s):\n${unread.map((r) => `- ${r.content}`).join("\n")}`,
+        text: `${unread.length} response(s):\n${lines}`,
       }],
     };
   }
