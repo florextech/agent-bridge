@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { use } from 'react';
 import { Badge, DataList, DataListItem, EmptyState, Heading, Spinner, Status, Text, Timeline, TimelineItem } from '@florexlabs/ui';
-import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText, Copy, Check } from '@phosphor-icons/react';
+import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText, Copy, Check, User, Robot } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import type { AgentEvent, ChannelResponse, Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
@@ -63,34 +63,40 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         {events.length === 0 && responses.length === 0 ? (
           <EmptyState title={t('session.noActivity')} description={t('session.noActivityDesc')} />
         ) : (
-          <Timeline>
-            {[
-              ...events.map((ev) => ({ kind: 'event' as const, id: ev.id, date: ev.createdAt, ev })),
-              ...responses.map((r) => ({ kind: 'response' as const, id: r.id, date: r.createdAt, r })),
-            ]
-              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-              .map((item) =>
-                item.kind === 'event' ? (
-                  <TimelineItem key={item.id} title={item.ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[item.ev.type] || <ChatText size={16} weight="duotone" />}>
-                    <div className="flex flex-col gap-1">
-                      <Badge tone="neutral">{item.ev.deliveryStatus}</Badge>
-                      {typeof item.ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{item.ev.payload['summary']}</Text>}
-                      <Text variant="muted" size="xs">{new Date(item.ev.createdAt).toLocaleString()}</Text>
-                    </div>
-                  </TimelineItem>
-                ) : (
-                  <TimelineItem key={item.id} title={t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
-                    <div className="flex flex-col gap-1">
-                      <Text size="sm">{item.r.content}</Text>
-                      <div className="flex items-center gap-2">
-                        {!item.r.read && <Badge tone="warning">{t('session.unread')}</Badge>}
+          <div className="max-h-[500px] overflow-y-auto pr-1">
+            <Timeline>
+              {[
+                ...events.map((ev) => ({ kind: 'event' as const, id: ev.id, date: ev.createdAt, ev })),
+                ...responses.map((r) => ({ kind: 'response' as const, id: r.id, date: r.createdAt, r })),
+              ]
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .map((item) =>
+                  item.kind === 'event' ? (
+                    <TimelineItem key={item.id} title={item.ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[item.ev.type] || <ChatText size={16} weight="duotone" />}>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="size-5 rounded-full bg-(--surface-muted) flex items-center justify-center"><Robot size={11} className="text-(--muted)" /></div>
+                          <Badge tone="neutral">{item.ev.deliveryStatus}</Badge>
+                        </div>
+                        {typeof item.ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{item.ev.payload['summary']}</Text>}
+                        <Text variant="muted" size="xs">{new Date(item.ev.createdAt).toLocaleString()}</Text>
+                      </div>
+                    </TimelineItem>
+                  ) : (
+                    <TimelineItem key={item.id} title={t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="size-5 rounded-full bg-[rgb(189_241_70/0.15)] flex items-center justify-center"><User size={11} className="text-(--brand-600)" /></div>
+                          {!item.r.read && <Badge tone="warning">{t('session.unread')}</Badge>}
+                        </div>
+                        <Text size="sm">{item.r.content}</Text>
                         <Text variant="muted" size="xs">{new Date(item.r.createdAt).toLocaleString()}</Text>
                       </div>
-                    </div>
-                  </TimelineItem>
-                ),
-              )}
-          </Timeline>
+                    </TimelineItem>
+                  ),
+                )}
+            </Timeline>
+          </div>
         )}
       </div>
     </div>
