@@ -11,15 +11,16 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   server!: Server;
 
   private agent: WebSocket | null = null;
+  private browserClients = new Set<WebSocket>();
 
-  handleConnection(client: WebSocket, req: { url?: string }): void {
-    this.logger.log(`Terminal client connected (${req.url || 'unknown'})`);
-    const hasAgent = this.agent !== null;
-    client.send(JSON.stringify({ type: 'output', data: hasAgent ? '● Connected (remote agent)\r\n' : '● Connected (local)\r\n' }));
+  handleConnection(client: WebSocket): void {
+    this.browserClients.add(client);
+    const mode = this.agent ? 'remote agent (PTY)' : 'local';
+    client.send(JSON.stringify({ type: 'output', data: `● Connected (${mode})\r\n` }));
   }
 
-  handleDisconnect(): void {
-    this.logger.log('Terminal client disconnected');
+  handleDisconnect(client: WebSocket): void {
+    this.browserClients.delete(client);
   }
 
   @SubscribeMessage('exec')
@@ -27,15 +28,13 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
     const cmd = typeof payload === 'string' ? payload : String(payload);
     if (!cmd.trim()) return;
 
-    // If a remote agent is connected, forward to it
     if (this.agent && this.agent.readyState === 1) {
-      this.logger.log(`Forwarding to agent: ${cmd}`);
+      // Forward to remote agent — it has a real PTY
       this.agent.send(JSON.stringify({ event: 'exec', data: cmd }));
       return;
     }
 
-    // Otherwise execute locally
-    this.logger.log(`Local exec: ${cmd}`);
+    // Fallback: local execution
     const proc = spawn('sh', ['-c', cmd], {
       cwd: process.env['TERMINAL_CWD'] || process.cwd(),
       env: { ...process.env, TERM: 'xterm-256color', FORCE_COLOR: '1' },
@@ -54,24 +53,29 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
     });
   }
 
-  // Register a remote terminal agent
   registerAgent(ws: WebSocket): void {
     this.agent = ws;
-    this.logger.log('Remote terminal agent registered');
+    this.logger.log('Remote terminal agent (PTY) registered');
+
+    // Notify browsers
+    this.browserClients.forEach((c) => {
+      if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '● Remote agent connected (PTY)\r\n' }));
+    });
 
     ws.on('message', (raw: Buffer) => {
       const msg = JSON.parse(raw.toString());
       // Forward agent output to all browser clients
-      this.server.clients.forEach((client) => {
-        if (client !== ws && client.readyState === 1) {
-          client.send(JSON.stringify(msg));
-        }
+      this.browserClients.forEach((client) => {
+        if (client.readyState === 1) client.send(JSON.stringify(msg));
       });
     });
 
     ws.on('close', () => {
       this.agent = null;
       this.logger.log('Remote terminal agent disconnected');
+      this.browserClients.forEach((c) => {
+        if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '\r\n● Remote agent disconnected\r\n' }));
+      });
     });
   }
 }

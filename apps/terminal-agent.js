@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * Agent Bridge Terminal Agent
+ * Agent Bridge Terminal Agent (PTY)
  *
- * Runs on your local machine and connects to the API via WebSocket.
- * The dashboard terminal sends commands through the API to this agent.
+ * Runs a real shell on your local machine with full interactive support.
+ * Connects to the API via WebSocket so the dashboard terminal can control it.
  *
  * Usage:
  *   node apps/terminal-agent.js --api http://localhost:3001
  *   node apps/terminal-agent.js --api https://your-api.com --cwd /path/to/project
+ *   node apps/terminal-agent.js --api http://localhost:3001 --shell /bin/zsh
  */
 
-const { execSync } = require('node:child_process');
+const pty = require('node-pty');
 const WebSocket = require('ws');
 
 const args = process.argv.slice(2);
@@ -22,37 +23,61 @@ function getArg(name) {
 
 const apiUrl = (getArg('api') || 'http://localhost:3001').replace('http', 'ws');
 const cwd = getArg('cwd') || process.cwd();
+const shellPath = getArg('shell') || process.env.SHELL || '/bin/zsh';
 
 const log = (msg) => console.log(`[${new Date().toLocaleTimeString()}] ${msg}`);
+
+let ptyProcess = null;
 
 function connect() {
   const ws = new WebSocket(`${apiUrl}/ws/terminal-agent`);
 
   ws.on('open', () => {
     log('✅ Connected to Agent Bridge API');
-    log(`   CWD: ${cwd}`);
-    ws.send(JSON.stringify({ type: 'register', cwd }));
+    log(`   Shell: ${shellPath}`);
+    log(`   CWD:   ${cwd}`);
+
+    // Spawn a real shell
+    ptyProcess = pty.spawn(shellPath, [], {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 30,
+      cwd,
+      env: { ...process.env, TERM: 'xterm-256color' },
+    });
+
+    // Forward shell output to API
+    ptyProcess.onData((data) => {
+      if (ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'output', data }));
+      }
+    });
+
+    ptyProcess.onExit(({ exitCode }) => {
+      log(`Shell exited (${exitCode}). Restarting...`);
+      if (ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
+      }
+    });
+
+    ws.send(JSON.stringify({ type: 'register', cwd, shell: shellPath }));
   });
 
   ws.on('message', (raw) => {
     const msg = JSON.parse(raw.toString());
-    if (msg.event === 'exec' && msg.data) {
-      const cmd = msg.data;
-      log(`🔄 $ ${cmd}`);
-      try {
-        const output = execSync(cmd, { encoding: 'utf8', cwd, timeout: 300000, maxBuffer: 10 * 1024 * 1024 });
-        ws.send(JSON.stringify({ type: 'output', data: output }));
-        ws.send(JSON.stringify({ type: 'exit', code: 0 }));
-      } catch (e) {
-        const stderr = (e.stderr || e.stdout || '').toString();
-        ws.send(JSON.stringify({ type: 'output', data: stderr || e.message }));
-        ws.send(JSON.stringify({ type: 'exit', code: e.status || 1 }));
-      }
+    // Receive input from dashboard terminal
+    if (msg.event === 'exec' && msg.data && ptyProcess) {
+      ptyProcess.write(msg.data + '\n');
+    }
+    // Resize
+    if (msg.event === 'resize' && msg.cols && msg.rows && ptyProcess) {
+      ptyProcess.resize(msg.cols, msg.rows);
     }
   });
 
   ws.on('close', () => {
     log('⚠️ Disconnected. Reconnecting in 3s...');
+    if (ptyProcess) { ptyProcess.kill(); ptyProcess = null; }
     setTimeout(connect, 3000);
   });
 
@@ -60,7 +85,8 @@ function connect() {
 }
 
 log('🖥️  Agent Bridge Terminal Agent');
-log(`   API: ${apiUrl}`);
-log(`   CWD: ${cwd}`);
+log(`   API:   ${apiUrl}`);
+log(`   Shell: ${shellPath}`);
+log(`   CWD:   ${cwd}`);
 log('');
 connect();
