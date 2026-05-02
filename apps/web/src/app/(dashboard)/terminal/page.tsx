@@ -21,6 +21,8 @@ export default function TerminalPage() {
         cursorBlink: true,
         fontSize: 13,
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        scrollback: 5000,
+        padding: 12,
         theme: {
           background: '#0a0c0b',
           foreground: '#edf6ee',

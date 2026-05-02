@@ -37,9 +37,10 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   @SubscribeMessage('resize')
-  handleResize(_client: WebSocket, payload: { cols: number; rows: number }): void {
-    if (this.agent && this.agent.readyState === 1) {
-      this.agent.send(JSON.stringify({ event: 'resize', cols: payload.cols, rows: payload.rows }));
+  handleResize(_client: WebSocket, payload: string | { cols: number; rows: number }): void {
+    const data = typeof payload === 'string' ? JSON.parse(payload) as { cols: number; rows: number } : payload;
+    if (this.agent && this.agent.readyState === 1 && data?.cols && data?.rows) {
+      this.agent.send(JSON.stringify({ event: 'resize', cols: data.cols, rows: data.rows }));
     }
   }
 
