@@ -11,6 +11,13 @@ import type { TelegramUser, AppUser } from '@/lib/api';
 export default function SettingsPage() {
   const { t } = useI18n();
   const [botToken, setBotToken] = useState('');
+  const [botUsername, setBotUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    bridgeApi.getTelegramStatus().then((s) => {
+      if (s.botUsername) setBotUsername(s.botUsername);
+    }).catch(() => {});
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,7 +33,7 @@ export default function SettingsPage() {
           <TabsTrigger value="team"><span className="inline-flex items-center gap-1.5"><Users size={15} weight="duotone" /> Team</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value="connections"><ConnectionsTab botToken={botToken} setBotToken={setBotToken} /></TabsContent>
+        <TabsContent value="connections"><ConnectionsTab botToken={botToken} setBotToken={setBotToken} botUsername={botUsername} setBotUsername={setBotUsername} /></TabsContent>
         <TabsContent value="sessions"><SessionsTab botToken={botToken} /></TabsContent>
         <TabsContent value="team"><TeamTab /></TabsContent>
       </Tabs>
@@ -35,16 +42,14 @@ export default function SettingsPage() {
 }
 
 /* ─── Connections ─── */
-function ConnectionsTab({ botToken, setBotToken }: { botToken: string; setBotToken: (v: string) => void }) {
+function ConnectionsTab({ botToken, setBotToken, botUsername, setBotUsername }: { botToken: string; setBotToken: (v: string) => void; botUsername: string | null; setBotUsername: (v: string | null) => void }) {
   const { t } = useI18n();
-  const [botUsername, setBotUsername] = useState<string | null>(null);
   const [users, setUsers] = useState<TelegramUser[]>([]);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     bridgeApi.getTelegramUsers().then(setUsers).catch(() => {});
-    bridgeApi.getTelegramStatus().then((s) => { if (s.botUsername) setBotUsername(s.botUsername); }).catch(() => {});
   }, []);
 
   const setupBot = async () => {
