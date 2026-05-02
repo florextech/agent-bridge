@@ -1,0 +1,11 @@
+{
+  "name": "@agent-bridge/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "agent-bridge-mcp": "./index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.12.1"
+  }
+}
