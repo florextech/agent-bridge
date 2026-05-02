@@ -3,17 +3,30 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, X, Terminal } from '@phosphor-icons/react';
 
-interface TermTab { id: number; label: string }
-let nextId = 1;
+interface TermTab { id: string; label: string }
 
 export default function TerminalPage() {
-  const [tabs, setTabs] = useState<TermTab[]>([{ id: nextId++, label: 'zsh' }]);
-  const [activeTab, setActiveTab] = useState(1);
+  const [tabs, setTabs] = useState<TermTab[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('');
 
-  const addTab = () => { const id = nextId++; setTabs((p) => [...p, { id, label: 'zsh' }]); setActiveTab(id); };
-  const closeTab = (id: number) => {
+  // Initialize on client only
+  useEffect(() => {
+    const id = crypto.randomUUID();
+    setTabs([{ id, label: 'zsh' }]);
+    setActiveTab(id);
+  }, []);
+
+  const addTab = () => {
+    const id = crypto.randomUUID();
+    setTabs((p) => [...p, { id, label: 'zsh' }]);
+    setActiveTab(id);
+  };
+
+  const closeTab = (id: string) => {
     setTabs((p) => { const n = p.filter((t) => t.id !== id); if (!n.length) return p; if (activeTab === id) setActiveTab(n[n.length - 1]!.id); return n; });
   };
+
+  if (!tabs.length) return null;
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] rounded-xl border border-(--border) overflow-hidden bg-[#0a0c0b]">
