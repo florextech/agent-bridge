@@ -53,7 +53,7 @@ async function poll() {
     }
 
     // Mark as read
-    await fetch(`${apiUrl}/agent-sessions/${sessionId}/mark-read`, { method: 'POST' });
+    await fetch(`${apiUrl}/agent-sessions/${sessionId}/mark-read`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
 
     // Re-invoke agent if command is set
     if (command) {
