@@ -15,19 +15,13 @@ const I18nContext = createContext<{ t: TFunc; locale: string; toggle: () => void
   toggle: () => {},
 });
 
-function getInitialLocale(): string {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('locale') || 'en';
-  }
-  return 'en';
-}
-
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState(getInitialLocale);
+export function I18nProvider({ initialLocale, children }: { initialLocale: string; children: ReactNode }) {
+  const [locale, setLocale] = useState(initialLocale);
 
   const toggle = useCallback(() => {
     const next = locale === 'en' ? 'es' : 'en';
     localStorage.setItem('locale', next);
+    document.cookie = `locale=${next};path=/;max-age=31536000;SameSite=Lax`;
     setLocale(next);
   }, [locale]);
 
