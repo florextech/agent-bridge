@@ -50,6 +50,10 @@ function ConnectionsTab({ botToken, setBotToken, botUsername, setBotUsername }: 
 
   useEffect(() => {
     bridgeApi.getTelegramUsers().then(setUsers).catch(() => {});
+    const interval = setInterval(() => {
+      bridgeApi.getTelegramUsers().then(setUsers).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const setupBot = async () => {
