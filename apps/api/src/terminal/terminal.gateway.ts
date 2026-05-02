@@ -10,8 +10,8 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   server!: Server;
 
   // Map browser client → its paired agent
-  private clientToAgent = new Map<WebSocket, WebSocket>();
-  private agentToClient = new Map<WebSocket, WebSocket>();
+  private readonly clientToAgent = new Map<WebSocket, WebSocket>();
+  private readonly agentToClient = new Map<WebSocket, WebSocket>();
   private pendingClients: WebSocket[] = [];
   private availableAgents: WebSocket[] = [];
 
