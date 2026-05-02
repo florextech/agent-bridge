@@ -37,6 +37,10 @@ export function useTelegramStatus() {
   return useQuery({ queryKey: queryKeys.telegramStatus, queryFn: bridgeApi.getTelegramStatus });
 }
 
+export function useTerminalStatus() {
+  return useQuery({ queryKey: ['terminal-status'] as const, queryFn: bridgeApi.getTerminalStatus });
+}
+
 export function useUsers() {
   return useQuery({ queryKey: queryKeys.users, queryFn: bridgeApi.getUsers });
 }

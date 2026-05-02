@@ -55,6 +55,8 @@ export const bridgeApi = {
     api<{ ok: boolean; botUsername?: string; error?: string }>('/telegram/setup', { method: 'POST', body: JSON.stringify({ botToken }) }),
   getTelegramStatus: () =>
     api<{ connected: boolean; botUsername: string | null }>('/telegram/status'),
+  getTerminalStatus: () =>
+    api<{ enabled: boolean }>('/terminal/status'),
   setupAdmin: (data: { email: string; name: string; password: string }) =>
     api<AppUser>('/users/setup', { method: 'POST', body: JSON.stringify(data) }),
   login: (data: { email: string; password: string }) =>
