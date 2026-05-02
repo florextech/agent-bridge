@@ -104,7 +104,7 @@ export default function TerminalPage() {
           {connected ? 'Connected' : 'Disconnected'}
         </div>
       </div>
-      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden min-h-0 p-2 bg-[#0a0c0b]" />
+      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden min-h-0 p-4 bg-[#0a0c0b]" />
     </div>
   );
 }
