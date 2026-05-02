@@ -8,7 +8,7 @@ import { Logo } from '@/components/Logo';
 import { useI18n } from '@/lib/i18n';
 import type { ReactNode } from 'react';
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default function DashboardLayout({ children }: Readonly<{ children: ReactNode }>) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Sidebar overlay on mobile */}
-      {open && <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} />}
+      {open && <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }} role="button" tabIndex={0} aria-label="Close menu" />}
 
       {/* Sidebar */}
       <nav className={`fixed md:sticky top-0 z-40 h-screen w-[220px] shrink-0 border-r border-(--border) bg-(--surface) flex flex-col transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   );
 }
 
-function NavLinks({ onNavigate }: { onNavigate: () => void }) {
+function NavLinks({ onNavigate }: Readonly<{ onNavigate: () => void }>) {
   const { t } = useI18n();
   const pathname = usePathname();
 

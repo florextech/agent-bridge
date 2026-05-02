@@ -4,7 +4,7 @@ import { DataList, DataListItem, Status } from '@florexlabs/ui';
 import { useI18n } from '@/lib/i18n';
 import type { Session } from '@agent-bridge/core';
 
-export function InfoTab({ session }: { session: Session }) {
+export function InfoTab({ session }: Readonly<{ session: Session }>) {
   const { t } = useI18n();
 
   return (

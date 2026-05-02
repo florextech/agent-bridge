@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Multi-channel platform for code agent notifications',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const locale = cookieStore.get('locale')?.value ?? 'en';
 

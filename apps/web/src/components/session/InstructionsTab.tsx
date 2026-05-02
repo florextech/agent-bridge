@@ -6,7 +6,7 @@ import { Copy, Check } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import type { Session } from '@agent-bridge/core';
 
-export function InstructionsTab({ session }: { session: Session }) {
+export function InstructionsTab({ session }: Readonly<{ session: Session }>) {
   const { t } = useI18n();
   const [copiedKey, setCopiedKey] = useState('');
 
