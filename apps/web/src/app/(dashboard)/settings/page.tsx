@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Heading, Input, Label, Text, Tabs, TabsList, TabsTrigger, TabsContent } from '@florexlabs/ui';
-import { TelegramLogo, Robot, Users, UserCheck, UserMinus, Copy, Check, Envelope, UserPlus, Trash, Shield } from '@phosphor-icons/react';
+import { TelegramLogo, Robot, Users, UserCheck, UserMinus, Copy, Check, Envelope, UserPlus, Trash, Shield, WhatsappLogo, DiscordLogo, SlackLogo, EnvelopeSimple } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import { ChannelType } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
@@ -132,20 +132,10 @@ function ConnectionsTab({ botToken, setBotToken }: { botToken: string; setBotTok
 
       {/* Coming soon channels */}
       <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {[
-          { name: 'WhatsApp', icon: '💬', color: 'rgb(37 211 102 / 0.15)' },
-          { name: 'Discord', icon: '🎮', color: 'rgb(88 101 242 / 0.15)' },
-          { name: 'Slack', icon: '💼', color: 'rgb(74 21 75 / 0.25)' },
-          { name: 'Email', icon: '✉️', color: 'rgb(189 241 70 / 0.1)' },
-        ].map((ch) => (
-          <div key={ch.name} className="rounded-xl border border-(--border) bg-(--surface) p-3 flex items-center gap-2.5 opacity-50">
-            <div className="size-8 rounded-lg flex items-center justify-center text-sm" style={{ background: ch.color }}>{ch.icon}</div>
-            <div>
-              <p className="text-xs font-medium text-(--foreground)">{ch.name}</p>
-              <p className="text-[10px] text-(--muted)">{t('settings.comingSoon')}</p>
-            </div>
-          </div>
-        ))}
+        <ComingSoon name="WhatsApp" icon={<WhatsappLogo size={18} weight="duotone" className="text-[#25D366]" />} color="rgb(37 211 102 / 0.15)" />
+        <ComingSoon name="Discord" icon={<DiscordLogo size={18} weight="duotone" className="text-[#5865F2]" />} color="rgb(88 101 242 / 0.15)" />
+        <ComingSoon name="Slack" icon={<SlackLogo size={18} weight="duotone" className="text-[#E01E5A]" />} color="rgb(74 21 75 / 0.25)" />
+        <ComingSoon name="Email" icon={<EnvelopeSimple size={18} weight="duotone" className="text-(--brand-600)" />} color="rgb(189 241 70 / 0.1)" />
       </div>
     </div>
   );
@@ -304,6 +294,19 @@ function TeamTab() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ComingSoon({ name, icon, color }: { name: string; icon: React.ReactNode; color: string }) {
+  const { t } = useI18n();
+  return (
+    <div className="rounded-xl border border-(--border) bg-(--surface) p-3 flex items-center gap-2.5 opacity-50">
+      <div className="size-8 rounded-lg flex items-center justify-center" style={{ background: color }}>{icon}</div>
+      <div>
+        <p className="text-xs font-medium text-(--foreground)">{name}</p>
+        <p className="text-[10px] text-(--muted)">{t('settings.comingSoon')}</p>
       </div>
     </div>
   );
