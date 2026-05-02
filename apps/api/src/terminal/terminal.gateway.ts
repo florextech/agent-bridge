@@ -21,10 +21,8 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
     const agent = this.availableAgents.shift();
     if (agent && agent.readyState === 1) {
       this.pair(client, agent);
-      client.send(JSON.stringify({ type: 'output', data: '\x1b[32m● Connected (remote PTY)\x1b[0m\r\n' }));
     } else {
       this.pendingClients.push(client);
-      client.send(JSON.stringify({ type: 'output', data: '\x1b[33m● Waiting for agent...\x1b[0m\r\n' }));
     }
   }
 
@@ -71,7 +69,6 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
     const client = this.pendingClients.shift();
     if (client && client.readyState === 1) {
       this.pair(client, ws);
-      client.send(JSON.stringify({ type: 'output', data: '\x1b[32m● Agent connected\x1b[0m\r\n' }));
     } else {
       this.availableAgents.push(ws);
     }
@@ -82,9 +79,6 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
       if (pairedClient) {
         this.clientToAgent.delete(pairedClient);
         this.agentToClient.delete(ws);
-        if (pairedClient.readyState === 1) {
-          pairedClient.send(JSON.stringify({ type: 'output', data: '\r\n\x1b[31m● Agent disconnected\x1b[0m\r\n' }));
-        }
       }
       this.availableAgents = this.availableAgents.filter((a) => a !== ws);
     });
