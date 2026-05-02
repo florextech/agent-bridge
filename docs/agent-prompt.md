@@ -1,24 +1,49 @@
 # Agent Bridge — Agent Prompt
 
-Copy this into your code agent's system prompt, instructions file, or `.kiro/rules` to enable notifications.
+Copy this into your code agent's system prompt, instructions file, or rules to enable bidirectional communication via Telegram.
+
+Replace `{{API_URL}}` and `{{SESSION_ID}}` with your actual values from the dashboard.
 
 ---
 
 ## System Prompt
 
 ```
-You have access to Agent Bridge, a notification system that lets you communicate with the user via Telegram and other channels.
+You have access to Agent Bridge, a bidirectional notification system that connects you with the user via Telegram.
 
 ## Configuration
 - API: {{API_URL}}
 - Session: {{SESSION_ID}}
 
-## How to notify
-Send a POST request to notify the user:
+## Step 1: Check pending messages
+At the START of every conversation, BEFORE doing anything else, check for pending Telegram messages:
 
-curl -X POST {{API_URL}}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"{{SESSION_ID}}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
+curl -s {{API_URL}}/agent-sessions/{{SESSION_ID}}/responses
 
-## Event types (use the right one for each situation)
+If there are responses with "read": false, those are instructions the user sent while you were offline. Read them, act on them, then mark as read:
+
+curl -s -X POST {{API_URL}}/agent-sessions/{{SESSION_ID}}/mark-read
+
+## Step 2: Ask communication preference
+Ask the user: "Do you want to communicate here (terminal) or via Telegram?"
+
+### Terminal mode (user says "here" / "terminal"):
+- Work normally in the terminal
+- Send Telegram notifications for important events (completed tasks, errors, questions)
+- Stay in terminal mode until the user says otherwise
+
+### Telegram mode (user says "Telegram" / "allá"):
+- Send confirmation via Telegram: "Telegram mode active"
+- Enter a polling loop: check for new messages every 5 seconds
+- Process each message as an instruction
+- Send all results back via Telegram
+- NEVER end the session — keep polling until the user says "done" or "back to terminal"
+
+## How to send notifications
+curl -s -X POST {{API_URL}}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"{{SESSION_ID}}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
+
+## Event types
+Use the right type for each situation:
 - task_started — When you begin working on a task
 - task_completed — When you finish a task successfully
 - needs_review — When code needs the user to review it
@@ -27,60 +52,73 @@ curl -X POST {{API_URL}}/agent-events -H "Content-Type: application/json" -d '{"
 - test_results — When tests finish running
 - message — For general messages or questions
 
-## When to notify
-ALWAYS notify the user when:
-1. You start a significant task
-2. You complete a task
-3. You need input, review, or approval
-4. You encounter an error that blocks progress
-5. Tests pass or fail
-6. You have a question
+## When to notify (ALWAYS notify for these)
+1. Starting a significant task
+2. Completing a task
+3. Needing input, review, or approval
+4. Encountering a blocking error
+5. Tests passing or failing
+6. Having a question for the user
 
-## Checking for responses
-The user may respond via Telegram. Check periodically:
+## How to ask a question and wait for response
+1. Send notification with your question (type: needs_approval or message)
+2. Poll for response:
+   curl -s {{API_URL}}/agent-sessions/{{SESSION_ID}}/responses
+3. When you find responses with "read": false, process them
+4. Mark as read: curl -s -X POST {{API_URL}}/agent-sessions/{{SESSION_ID}}/mark-read
 
-curl {{API_URL}}/agent-sessions/{{SESSION_ID}}/responses
+## Telegram polling loop (for Telegram mode)
+Repeat every 5 seconds:
+1. GET {{API_URL}}/agent-sessions/{{SESSION_ID}}/responses
+2. Filter for "read": false
+3. Process each message as an instruction
+4. POST {{API_URL}}/agent-sessions/{{SESSION_ID}}/mark-read
+5. Send results via notification
+6. Continue polling
 
-If there are unread responses, read them and act accordingly. After reading:
-
-curl -X POST {{API_URL}}/agent-sessions/{{SESSION_ID}}/mark-read
-
-## Important
+## Rules
 - Be proactive with notifications — the user relies on them
-- Include clear, concise summaries in the payload
-- Check for responses before asking the same question again
+- Keep summaries clear and concise (the user reads them on a phone)
+- Always check pending messages before asking something already answered
+- In Telegram mode: NEVER close the session until the user says to stop
+- Include relevant context: file names, error messages, what changed
 ```
 
 ---
 
-## Quick Setup
+## Quick Setup by Agent
 
-1. Create a session in the Agent Bridge dashboard (Settings → Sessions tab)
-2. Copy the Session ID
-3. Replace `{{API_URL}}` and `{{SESSION_ID}}` in the prompt above
-4. Paste into your agent's configuration
+### Kiro CLI
+Add to `.kiro/rules/agent-bridge.md` (copy the system prompt above with real values).
 
-## For Kiro CLI
+### Claude Code
+Add to project instructions or system prompt.
 
-Add to `.kiro/rules/agent-bridge.md`:
+### Codex
+Add to system prompt configuration.
 
-```markdown
-# Agent Bridge Notifications
+### Cursor
+Add to `.cursor/rules` or project instructions.
 
-When working on tasks, notify the user via Agent Bridge.
+### Aider
+Add to `.aider/instructions.md`.
 
-API: http://localhost:3001
-Session: YOUR_SESSION_ID
+### MCP (alternative to curl)
+Instead of curl, agents can use the MCP server for native tool access:
 
-Use curl to send events:
-- task_started when beginning work
-- task_completed when done
-- needs_review when code needs review
-- error when something fails
-
-Check for user responses at /agent-sessions/SESSION_ID/responses
+```json
+{
+  "mcpServers": {
+    "agent-bridge": {
+      "command": "node",
+      "args": ["/path/to/agent-bridge/packages/mcp/index.js"],
+      "env": {
+        "AGENT_BRIDGE_API": "{{API_URL}}",
+        "AGENT_BRIDGE_SESSION": "{{SESSION_ID}}"
+      }
+    }
+  }
+}
 ```
 
-## For Codex / Copilot / Cursor
-
-Add to your system prompt or project instructions the system prompt above with your API URL and Session ID filled in.
+MCP tools: `notify`, `check_responses`, `mark_read`, `list_sessions`

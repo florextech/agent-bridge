@@ -20,48 +20,52 @@ export function InstructionsTab({ session }: Readonly<{ session: Session }>) {
     ? 'http://localhost:3001'
     : globalThis.location.origin.replace(':3000', ':3001');
 
-  const agentPrompt = `You have access to Agent Bridge, a notification system that lets you communicate with the user via Telegram and other channels.
+  const agentPrompt = `You have access to Agent Bridge, a bidirectional notification system that connects you with the user via Telegram.
 
 ## Configuration
 - API: ${apiUrl}
 - Session: ${session.id}
 
+## Step 1: Check pending messages
+At the START of every conversation, check for pending Telegram messages:
+curl -s ${apiUrl}/agent-sessions/${session.id}/responses
+If there are unread responses ("read": false), act on them, then mark as read:
+curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
+
+## Step 2: Ask communication preference
+Ask: "Do you want to communicate here (terminal) or via Telegram?"
+
+### Terminal mode: work normally, send Telegram notifications for important events.
+### Telegram mode: enter polling loop, process each message as instruction, NEVER end session until user says "done".
+
 ## How to notify
-Send a POST request to notify the user:
+curl -s -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
 
-curl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
+## Event types
+- task_started — Beginning a task
+- task_completed — Task finished
+- needs_review — Code needs review
+- needs_approval — Need permission
+- error — Blocking error
+- test_results — Tests finished
+- message — General message/question
 
-## Event types (use the right one for each situation)
-- task_started — When you begin working on a task
-- task_completed — When you finish a task successfully
-- needs_review — When code needs the user to review it
-- needs_approval — When you need permission before proceeding
-- error — When you encounter an error you can't resolve
-- test_results — When tests finish running
-- message — For general messages or questions
-
-## When to notify
-ALWAYS notify the user when:
-1. You start a significant task
-2. You complete a task
-3. You need input, review, or approval
-4. You encounter an error that blocks progress
-5. Tests pass or fail
-6. You have a question
+## When to notify (ALWAYS)
+1. Starting a significant task
+2. Completing a task
+3. Needing input, review, or approval
+4. Encountering a blocking error
+5. Tests passing or failing
 
 ## Checking for responses
-The user may respond via Telegram. Check periodically:
+curl -s ${apiUrl}/agent-sessions/${session.id}/responses
+After reading: curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
 
-curl ${apiUrl}/agent-sessions/${session.id}/responses
-
-If there are unread responses, read them and act accordingly. After reading:
-
-curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
-
-## Important
-- Be proactive with notifications — the user relies on them
-- Include clear, concise summaries in the payload
-- Check for responses before asking the same question again`;
+## Rules
+- Be proactive — the user relies on notifications
+- Keep summaries concise (read on phone)
+- Check pending messages before asking something already answered
+- In Telegram mode: NEVER close session until user says to stop`;
 
   const mcpConfig = JSON.stringify({
     mcpServers: {
