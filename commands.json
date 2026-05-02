@@ -1,0 +1,12 @@
+{
+  "commands": {
+    "test": "cd /Users/cristiandavidflorez/Documents/TRABAJO/FLOREXLABS/OPENSOURCE/agent-bridge && pnpm test",
+    "build": "cd /Users/cristiandavidflorez/Documents/TRABAJO/FLOREXLABS/OPENSOURCE/agent-bridge && pnpm -r build",
+    "status": "cd /Users/cristiandavidflorez/Documents/TRABAJO/FLOREXLABS/OPENSOURCE/agent-bridge && git status",
+    "log": "cd /Users/cristiandavidflorez/Documents/TRABAJO/FLOREXLABS/OPENSOURCE/agent-bridge && git log --oneline -5",
+    "ls": "ls -la",
+    "date": "date",
+    "hello": "echo 🤖 Agent Bridge says hello!"
+  },
+  "default": "echo 📨 Received:"
+}

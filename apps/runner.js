@@ -95,17 +95,36 @@ function parseMessage(text) {
   return { cmd: null, args: trimmed };
 }
 
+function runAndReport(label, fullCommand) {
+  log(`🔄 ${label}: ${fullCommand}`);
+  try {
+    const output = execSync(fullCommand, { timeout: 300000, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+    const trimmed = (output || '').trim();
+    const summary = trimmed.length > 500 ? trimmed.slice(-500) + '...' : trimmed;
+    log(`✅ ${label} completed`);
+    // Send result back via agent event
+    fetch(`${apiUrl}/agent-events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, type: 'message', payload: { summary: `✅ ${label}\n\n${summary || '(no output)'}` } }),
+    }).catch(() => {});
+  } catch (e) {
+    const stderr = e.stderr ? e.stderr.toString().trim().slice(-300) : '';
+    const msg = `❌ ${label} failed (exit ${e.status || '?'})\n\n${stderr || e.message}`;
+    log(`⚠️ ${label} failed`);
+    fetch(`${apiUrl}/agent-events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, type: 'error', payload: { summary: msg } }),
+    }).catch(() => {});
+  }
+}
+
 function executeCommand(cmd, cmdArgs) {
   const template = commands[cmd];
   if (template) {
     const fullCommand = cmdArgs ? `${template} "${cmdArgs}"` : template;
-    log(`🔄 /${cmd}: ${fullCommand}`);
-    try {
-      execSync(fullCommand, { stdio: 'inherit', timeout: 300000 });
-      log(`✅ /${cmd} completed`);
-    } catch (e) {
-      log(`⚠️ /${cmd} failed: ${e.status || e.message}`);
-    }
+    runAndReport(`/${cmd}`, fullCommand);
     return true;
   }
   return false;
@@ -132,13 +151,7 @@ async function poll() {
       if (cmd && commands[cmd]) {
         executeCommand(cmd, cmdArgs);
       } else if (fallbackCommand) {
-        const fullCommand = `${fallbackCommand} "${r.content}"`;
-        log(`🔄 ${fullCommand}`);
-        try {
-          execSync(fullCommand, { stdio: 'inherit', timeout: 300000 });
-        } catch (e) {
-          log(`⚠️ Command failed: ${e.status || e.message}`);
-        }
+        runAndReport('command', `${fallbackCommand} "${r.content}"`);
       } else {
         log(`📨 ${r.content}`);
         if (cmd) log(`   ⚠️ Unknown command: /${cmd}`);
