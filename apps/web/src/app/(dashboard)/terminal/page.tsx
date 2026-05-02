@@ -2,14 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Plus, X, Terminal, ShieldWarning } from '@phosphor-icons/react';
+import { useI18n } from '@/lib/i18n';
 
 interface TermTab { id: string; label: string }
 
 export default function TerminalPage() {
+  const { t } = useI18n();
   const [tabs, setTabs] = useState<TermTab[]>([]);
   const [activeTab, setActiveTab] = useState<string>('');
 
-  // Initialize on client only
   useEffect(() => {
     const id = crypto.randomUUID();
     setTabs([{ id, label: 'zsh' }]);
@@ -24,7 +25,7 @@ export default function TerminalPage() {
 
   const closeTab = (id: string) => {
     setTabs((p) => {
-      const n = p.filter((t) => t.id !== id);
+      const n = p.filter((tab) => tab.id !== id);
       if (!n.length) return p;
       if (activeTab === id) {
         setActiveTab(n.at(-1)?.id ?? '');
@@ -37,15 +38,13 @@ export default function TerminalPage() {
 
   return (
     <div className="flex flex-col gap-3 h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)]">
-      {/* Security warning */}
       <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[rgb(245_158_11/0.08)] border border-[rgb(245_158_11/0.25)] shrink-0">
         <ShieldWarning size={18} weight="duotone" className="text-(--warning) shrink-0" />
-        <p className="text-xs text-(--warning)">This terminal has full shell access to the connected machine. Use with caution.</p>
-        <span className="ml-auto px-2 py-0.5 rounded-full bg-[rgb(245_158_11/0.15)] text-[10px] font-semibold text-(--warning) shrink-0">Experimental</span>
+        <p className="text-xs text-(--warning)">{t('terminal.securityWarning')}</p>
+        <span className="ml-auto px-2 py-0.5 rounded-full bg-[rgb(245_158_11/0.15)] text-[10px] font-semibold text-(--warning) shrink-0">{t('terminal.experimental')}</span>
       </div>
 
       <div className="flex-1 min-h-0 rounded-xl border border-(--border) overflow-hidden bg-[#0a0c0b] flex flex-col">
-      {/* Tab bar */}
       <div className="flex items-center bg-[#111513] border-b border-(--border) shrink-0">
         <div className="flex items-center flex-1 overflow-x-auto">
           {tabs.map((tab) => (
@@ -64,7 +63,7 @@ export default function TerminalPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
                   className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[rgb(239_68_68/0.15)] text-(--muted) hover:text-(--danger) transition-all"
-                  title="Close tab"
+                  title={t('terminal.closeTab')}
                 >
                   <X size={10} />
                 </button>
@@ -72,12 +71,11 @@ export default function TerminalPage() {
             </button>
           ))}
         </div>
-        <button onClick={addTab} className="px-3 py-2 text-(--muted) hover:text-(--foreground) hover:bg-[rgb(255_255_255/0.03)] transition-colors" title="New terminal">
+        <button onClick={addTab} className="px-3 py-2 text-(--muted) hover:text-(--foreground) hover:bg-[rgb(255_255_255/0.03)] transition-colors" title={t('terminal.newTerminal')}>
           <Plus size={13} />
         </button>
       </div>
 
-      {/* Panels */}
       {tabs.map((tab) => (
         <div key={tab.id} className={`flex-1 min-h-0 ${activeTab === tab.id ? '' : 'hidden'}`}>
           <TerminalPanel />
@@ -89,6 +87,7 @@ export default function TerminalPage() {
 }
 
 function TerminalPanel() {
+  const { t } = useI18n();
   const termRef = useRef<HTMLDivElement>(null);
   const [connected, setConnected] = useState(false);
 
@@ -161,7 +160,7 @@ function TerminalPanel() {
       <div className="flex items-center justify-end px-4 py-1 bg-[#111513] border-t border-(--border)">
         <div className={`flex items-center gap-1.5 text-[10px] ${connected ? 'text-(--brand-600)' : 'text-(--danger)'}`}>
           <span className={`size-1.5 rounded-full ${connected ? 'bg-(--brand-600)' : 'bg-(--danger)'}`} />
-          {connected ? 'connected' : 'disconnected'}
+          {connected ? t('terminal.connected') : t('terminal.disconnected')}
         </div>
       </div>
     </div>

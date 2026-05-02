@@ -22,8 +22,8 @@ export default function SettingsPage() {
       <Tabs defaultValue="connections">
         <TabsList>
           <TabsTrigger value="connections"><span className="inline-flex items-center gap-1.5"><TelegramLogo size={15} weight="duotone" /> {t('settings.connections')}</span></TabsTrigger>
-          <TabsTrigger value="sessions"><span className="inline-flex items-center gap-1.5"><Robot size={15} weight="duotone" /> Sessions</span></TabsTrigger>
-          <TabsTrigger value="team"><span className="inline-flex items-center gap-1.5"><Users size={15} weight="duotone" /> Team</span></TabsTrigger>
+          <TabsTrigger value="sessions"><span className="inline-flex items-center gap-1.5"><Robot size={15} weight="duotone" /> {t('settings.sessions')}</span></TabsTrigger>
+          <TabsTrigger value="team"><span className="inline-flex items-center gap-1.5"><Users size={15} weight="duotone" /> {t('settings.team')}</span></TabsTrigger>
         </TabsList>
         <TabsContent value="connections"><TelegramTab botToken={botToken} onBotTokenChange={setBotToken} /></TabsContent>
         <TabsContent value="sessions"><SessionsTab botToken={botToken} /></TabsContent>

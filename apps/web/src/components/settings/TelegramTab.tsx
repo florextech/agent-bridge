@@ -34,7 +34,7 @@ export function TelegramTab({ botToken, onBotTokenChange }: Readonly<{ botToken:
   const removeMutation = useRemoveTelegramUser();
 
   const setupBot = () => {
-    if (!botToken) return dispatch({ type: 'SET_RESULT', payload: { ok: false, msg: 'Enter your bot token first' } });
+    if (!botToken) return dispatch({ type: 'SET_RESULT', payload: { ok: false, msg: t('settings.enterBotToken') } });
     setupMutation.mutate(botToken, {
       onSuccess: (res) => {
         if (res.ok && res.botUsername) {
@@ -57,7 +57,6 @@ export function TelegramTab({ botToken, onBotTokenChange }: Readonly<{ botToken:
 
   return (
     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Left: Connection */}
       <div className="flex flex-col gap-4">
         <div className="flx-card">
           <div className="flex items-center gap-3 mb-4">
@@ -93,7 +92,6 @@ export function TelegramTab({ botToken, onBotTokenChange }: Readonly<{ botToken:
         )}
       </div>
 
-      {/* Right: Users */}
       <div className="flx-card">
         <div className="flex items-center justify-between mb-3">
           <p className="font-display text-sm font-semibold">{t('settings.authorizedUsers')}</p>
@@ -112,16 +110,16 @@ export function TelegramTab({ botToken, onBotTokenChange }: Readonly<{ botToken:
                 </div>
                 <Badge tone={u.authorized ? 'success' : 'warning'}>{u.authorized ? t('settings.active') : t('settings.pending')}</Badge>
                 {!u.authorized && (
-                  <button onClick={() => toggleAuthMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(189_241_70/0.1)] text-(--muted) hover:text-(--brand-600) transition-colors" title="Approve">
+                  <button onClick={() => toggleAuthMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(189_241_70/0.1)] text-(--muted) hover:text-(--brand-600) transition-colors" title={t('settings.approve')}>
                     <UserCheck size={14} />
                   </button>
                 )}
                 {u.authorized && (
-                  <button onClick={() => toggleAuthMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(245_158_11/0.1)] text-(--muted) hover:text-(--warning) transition-colors" title="Revoke">
+                  <button onClick={() => toggleAuthMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(245_158_11/0.1)] text-(--muted) hover:text-(--warning) transition-colors" title={t('settings.revoke')}>
                     <UserMinus size={14} />
                   </button>
                 )}
-                <button onClick={() => removeMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(239_68_68/0.1)] text-(--muted) hover:text-(--danger) transition-colors" title="Remove">
+                <button onClick={() => removeMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(239_68_68/0.1)] text-(--muted) hover:text-(--danger) transition-colors" title={t('settings.remove')}>
                   <Trash size={14} />
                 </button>
               </div>
@@ -130,7 +128,6 @@ export function TelegramTab({ botToken, onBotTokenChange }: Readonly<{ botToken:
         )}
       </div>
 
-      {/* Coming soon channels */}
       <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
         <ComingSoon name="WhatsApp" icon={<WhatsappLogo size={18} weight="duotone" className="text-[#25D366]" />} color="rgb(37 211 102 / 0.15)" />
         <ComingSoon name="Discord" icon={<DiscordLogo size={18} weight="duotone" className="text-[#5865F2]" />} color="rgb(88 101 242 / 0.15)" />

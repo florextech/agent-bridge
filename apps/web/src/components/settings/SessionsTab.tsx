@@ -54,7 +54,6 @@ export function SessionsTab({ botToken }: Readonly<{ botToken: string }>) {
 
   return (
     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Left: Create */}
       <div className="flx-card">
         <p className="font-display text-sm font-semibold mb-1">{t('settings.quickSession')}</p>
         <Text variant="muted" size="xs" className="mb-4">{t('settings.quickSessionDesc')}</Text>
@@ -71,22 +70,21 @@ export function SessionsTab({ botToken }: Readonly<{ botToken: string }>) {
         </div>
         {state.session && (
           <div className="mt-4 pt-4 border-t border-(--border)">
-            <Alert variant="success">Session created!</Alert>
+            <Alert variant="success">{t('settings.sessionCreated')}</Alert>
             <div className="mt-3 flex items-center gap-2 p-2.5 rounded-lg bg-(--surface-muted) border border-(--border)">
               <code className="flex-1 text-xs text-(--brand-600) truncate">{state.session.id}</code>
               <button onClick={() => copy('id', state.session!.id)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--foreground) transition-colors">
                 {state.copiedKey === 'id' ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
               </button>
             </div>
-            <button onClick={() => dispatch({ type: 'SET_SESSION', payload: null })} className="mt-2 text-xs text-(--muted) hover:text-(--foreground) transition-colors">+ Create another</button>
+            <button onClick={() => dispatch({ type: 'SET_SESSION', payload: null })} className="mt-2 text-xs text-(--muted) hover:text-(--foreground) transition-colors">{t('settings.createAnother')}</button>
           </div>
         )}
       </div>
 
-      {/* Right: Instructions */}
       <div className="flx-card">
-        <p className="font-display text-sm font-semibold mb-1">Agent Instructions</p>
-        <Text variant="muted" size="xs" className="mb-3">Paste into your agent&apos;s system prompt</Text>
+        <p className="font-display text-sm font-semibold mb-1">{t('settings.agentInstructions')}</p>
+        <Text variant="muted" size="xs" className="mb-3">{t('settings.pasteIntoPrompt')}</Text>
         {state.session ? (
           <div className="relative">
             <pre className="p-3 rounded-lg bg-(--surface-muted) border border-(--border) text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap text-(--foreground) max-h-[400px] overflow-y-auto">{agentPrompt}</pre>
@@ -96,7 +94,7 @@ export function SessionsTab({ botToken }: Readonly<{ botToken: string }>) {
           </div>
         ) : (
           <div className="p-6 rounded-lg bg-(--surface-muted) border border-(--border) text-center">
-            <Text variant="muted" size="sm">Create a session to see the instructions</Text>
+            <Text variant="muted" size="sm">{t('settings.createSessionToSee')}</Text>
           </div>
         )}
       </div>

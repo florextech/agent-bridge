@@ -28,14 +28,14 @@ function AcceptInviteForm() {
       const res = await signIn('credentials', { email: user.email, password: form.password, redirect: false });
       if (!res?.error) globalThis.location.href = '/';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to accept invitation');
+      setError(err instanceof Error ? err.message : t('auth.failedAcceptInvite'));
     }
   };
 
   if (!token) {
     return (
       <div className="flx-card w-full max-w-sm">
-        <Alert variant="danger">Missing invitation token.</Alert>
+        <Alert variant="danger">{t('auth.missingToken')}</Alert>
       </div>
     );
   }
@@ -43,7 +43,7 @@ function AcceptInviteForm() {
   if (success) {
     return (
       <div className="flx-card w-full max-w-sm">
-        <Alert variant="success">Account created! Redirecting...</Alert>
+        <Alert variant="success">{t('auth.accountCreatedRedirecting')}</Alert>
       </div>
     );
   }

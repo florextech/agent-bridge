@@ -1,5 +1,5 @@
 {
-  "common": { "appName": "Agent Bridge", "version": "v0.1.0" },
+  "common": { "appName": "Agent Bridge", "version": "v0.1.0", "closeMenu": "Close menu", "delete": "Delete" },
   "nav": { "sessions": "Sessions", "settings": "Settings", "terminal": "Terminal" },
   "auth": {
     "signIn": "Sign In",
@@ -13,7 +13,12 @@
     "createAdmin": "Create Admin Account",
     "acceptInvite": "Accept Invitation",
     "acceptDesc": "Create your account to join Agent Bridge.",
-    "accept": "Create Account"
+    "accept": "Create Account",
+    "missingToken": "Missing invitation token.",
+    "accountCreatedRedirecting": "Account created! Redirecting...",
+    "failedAcceptInvite": "Failed to accept invitation",
+    "loginFailedAfterSetup": "Account created but login failed. Go to /login.",
+    "setupFailed": "Setup failed"
   },
   "dashboard": {
     "title": "Sessions",
@@ -34,6 +39,8 @@
     "backToSessions": "Back to sessions",
     "sessionInfo": "Session Info",
     "timeline": "Timeline",
+    "instructions": "Instructions",
+    "info": "Info",
     "responses": "Responses",
     "noActivity": "No activity yet",
     "noActivityDesc": "Events and responses will appear here.",
@@ -43,8 +50,11 @@
     "show": "Show",
     "hide": "Hide",
     "instructionsDesc": "Copy this into your agent's system prompt or instructions file.",
+    "mcpConfiguration": "MCP Configuration",
+    "mcpConfigDesc": "Add this to your MCP client (e.g. Kiro) configuration:",
     "created": "Created",
-    "updated": "Updated"
+    "updated": "Updated",
+    "agentPrefix": "Agent"
   },
   "settings": {
     "eyebrow": "Configuration",
@@ -63,11 +73,20 @@
     "active": "active",
     "paused": "paused",
     "pending": "pending",
+    "approve": "Approve",
+    "revoke": "Revoke",
+    "remove": "Remove",
+    "enterBotToken": "Enter your bot token first",
     "quickSession": "Quick Session",
     "quickSessionDesc": "Create a session that notifies all authorized users.",
     "projectName": "Project",
     "agentName": "Agent",
     "createSession": "Create Session",
+    "sessionCreated": "Session created!",
+    "createAnother": "+ Create another",
+    "agentInstructions": "Agent Instructions",
+    "pasteIntoPrompt": "Paste into your agent's system prompt",
+    "createSessionToSee": "Create a session to see the instructions",
     "users": "Users",
     "inviteUser": "Invite User",
     "invite": "Invite",
@@ -81,8 +100,20 @@
     "sendInvitation": "Send an email invitation",
     "sendInvite": "Send Invitation",
     "teamMembers": "Team Members",
+    "userCount": "user(s)",
+    "noUsersYet": "No users yet",
+    "invitationSent": "Invitation sent to {email}",
     "connections": "Connections",
+    "sessions": "Sessions",
     "comingSoon": "Coming soon"
+  },
+  "terminal": {
+    "securityWarning": "This terminal has full shell access to the connected machine. Use with caution.",
+    "experimental": "Experimental",
+    "closeTab": "Close tab",
+    "newTerminal": "New terminal",
+    "connected": "connected",
+    "disconnected": "disconnected"
   },
   "integration": {
     "eyebrow": "Developers",

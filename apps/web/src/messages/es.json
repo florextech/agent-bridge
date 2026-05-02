@@ -1,5 +1,5 @@
 {
-  "common": { "appName": "Agent Bridge", "version": "v0.1.0" },
+  "common": { "appName": "Agent Bridge", "version": "v0.1.0", "closeMenu": "Cerrar menú", "delete": "Eliminar" },
   "nav": { "sessions": "Sesiones", "settings": "Configuración", "terminal": "Terminal" },
   "auth": {
     "signIn": "Iniciar Sesión",
@@ -13,7 +13,12 @@
     "createAdmin": "Crear Cuenta de Admin",
     "acceptInvite": "Aceptar Invitación",
     "acceptDesc": "Crea tu cuenta para unirte a Agent Bridge.",
-    "accept": "Crear Cuenta"
+    "accept": "Crear Cuenta",
+    "missingToken": "Falta el token de invitación.",
+    "accountCreatedRedirecting": "¡Cuenta creada! Redirigiendo...",
+    "failedAcceptInvite": "Error al aceptar la invitación",
+    "loginFailedAfterSetup": "Cuenta creada pero el inicio de sesión falló. Ve a /login.",
+    "setupFailed": "Error en la configuración"
   },
   "dashboard": {
     "title": "Sesiones",
@@ -34,6 +39,8 @@
     "backToSessions": "Volver a sesiones",
     "sessionInfo": "Info de Sesión",
     "timeline": "Línea de Tiempo",
+    "instructions": "Instrucciones",
+    "info": "Info",
     "responses": "Respuestas",
     "noActivity": "Sin actividad aún",
     "noActivityDesc": "Los eventos y respuestas aparecerán aquí.",
@@ -43,8 +50,11 @@
     "show": "Mostrar",
     "hide": "Ocultar",
     "instructionsDesc": "Copia esto en el prompt de sistema o archivo de instrucciones de tu agente.",
+    "mcpConfiguration": "MCP Configuration",
+    "mcpConfigDesc": "Agrega esto a la configuración de tu cliente MCP (ej. Kiro):",
     "created": "Creado",
-    "updated": "Actualizado"
+    "updated": "Actualizado",
+    "agentPrefix": "Agente"
   },
   "settings": {
     "eyebrow": "Configuración",
@@ -63,11 +73,20 @@
     "active": "activo",
     "paused": "pausado",
     "pending": "pendiente",
+    "approve": "Aprobar",
+    "revoke": "Revocar",
+    "remove": "Eliminar",
+    "enterBotToken": "Ingresa el token de tu bot primero",
     "quickSession": "Sesión Rápida",
     "quickSessionDesc": "Crea una sesión que notifica a todos los usuarios autorizados.",
     "projectName": "Proyecto",
     "agentName": "Agente",
     "createSession": "Crear Sesión",
+    "sessionCreated": "¡Sesión creada!",
+    "createAnother": "+ Crear otra",
+    "agentInstructions": "Instrucciones del Agente",
+    "pasteIntoPrompt": "Pega en el prompt de sistema de tu agente",
+    "createSessionToSee": "Crea una sesión para ver las instrucciones",
     "users": "Usuarios",
     "inviteUser": "Invitar Usuario",
     "invite": "Invitar",
@@ -81,8 +100,20 @@
     "sendInvitation": "Enviar una invitación por correo",
     "sendInvite": "Enviar Invitación",
     "teamMembers": "Miembros del Equipo",
+    "userCount": "usuario(s)",
+    "noUsersYet": "Aún no hay usuarios",
+    "invitationSent": "Invitación enviada a {email}",
     "connections": "Conexiones",
+    "sessions": "Sesiones",
     "comingSoon": "Próximamente"
+  },
+  "terminal": {
+    "securityWarning": "Esta terminal tiene acceso completo al shell de la máquina conectada. Usa con precaución.",
+    "experimental": "Experimental",
+    "closeTab": "Cerrar pestaña",
+    "newTerminal": "Nueva terminal",
+    "connected": "conectado",
+    "disconnected": "desconectado"
   },
   "integration": {
     "eyebrow": "Desarrolladores",

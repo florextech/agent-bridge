@@ -87,8 +87,8 @@ curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
         </div>
       </div>
       <div className="flx-card flex flex-col gap-3">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">MCP Configuration</p>
-        <Text variant="muted" size="xs">Add this to your MCP client (e.g. Kiro) configuration:</Text>
+        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">{t('session.mcpConfiguration')}</p>
+        <Text variant="muted" size="xs">{t('session.mcpConfigDesc')}</Text>
         <div className="relative">
           <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{mcpConfig}</pre>
           <InlineCopyBtn active={copiedKey === 'mcp'} onClick={() => copy('mcp', mcpConfig)} />

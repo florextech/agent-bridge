@@ -9,11 +9,11 @@ import { useI18n } from '@/lib/i18n';
 import type { ReactNode } from 'react';
 
 export default function DashboardLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen">
-      {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-(--surface) border-b border-(--border) flex items-center px-4 gap-3">
         <button onClick={() => setOpen(!open)} className="p-2 -ml-2 rounded-lg text-(--muted) hover:text-(--foreground)">
           {open ? <X size={20} /> : <List size={20} />}
@@ -22,10 +22,8 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
         <span className="font-display text-sm font-bold text-(--foreground)">Agent Bridge</span>
       </div>
 
-      {/* Sidebar overlay on mobile */}
-      {open && <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }} role="button" tabIndex={0} aria-label="Close menu" />}
+      {open && <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }} role="button" tabIndex={0} aria-label={t('common.closeMenu')} />}
 
-      {/* Sidebar */}
       <nav className={`fixed md:sticky top-0 z-40 h-screen w-[220px] shrink-0 border-r border-(--border) bg-(--surface) flex flex-col transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="hidden md:block px-5 pt-5 pb-4">
           <a href="/" className="flex items-center gap-2.5">
@@ -41,7 +39,6 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
         </div>
       </nav>
 
-      {/* Main */}
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
         <div className="max-w-[1100px] mx-auto px-4 py-6 sm:px-6 md:px-10 md:py-8">{children}</div>
       </main>

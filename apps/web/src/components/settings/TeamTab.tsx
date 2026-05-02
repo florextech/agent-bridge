@@ -38,7 +38,7 @@ export function TeamTab() {
     inviteMutation.mutate(
       { email: state.inviteEmail, role: state.inviteRole },
       {
-        onSuccess: () => { dispatch({ type: 'SET_RESULT', payload: { ok: true, msg: `Invitation sent to ${state.inviteEmail}` } }); dispatch({ type: 'SET_INVITE_EMAIL', payload: '' }); },
+        onSuccess: () => { dispatch({ type: 'SET_RESULT', payload: { ok: true, msg: t('settings.invitationSent').replace('{email}', state.inviteEmail) } }); dispatch({ type: 'SET_INVITE_EMAIL', payload: '' }); },
         onError: (err) => dispatch({ type: 'SET_RESULT', payload: { ok: false, msg: err.message } }),
       },
     );
@@ -46,7 +46,6 @@ export function TeamTab() {
 
   return (
     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Left: Invite */}
       <div className="flx-card">
         <div className="flex items-center gap-3 mb-4">
           <div className="size-9 rounded-lg bg-[rgb(118_183_61/0.15)] flex items-center justify-center">
@@ -74,15 +73,14 @@ export function TeamTab() {
         </div>
       </div>
 
-      {/* Right: User list */}
       <div className="flx-card">
         <div className="flex items-center justify-between mb-3">
           <p className="font-display text-sm font-semibold">{t('settings.teamMembers')}</p>
-          <Text variant="muted" size="xs">{users.length} user(s)</Text>
+          <Text variant="muted" size="xs">{users.length} {t('settings.userCount')}</Text>
         </div>
         {users.length === 0 ? (
           <div className="p-6 rounded-lg bg-(--surface-muted) border border-(--border) text-center">
-            <Text variant="muted" size="sm">No users yet</Text>
+            <Text variant="muted" size="sm">{t('settings.noUsersYet')}</Text>
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">

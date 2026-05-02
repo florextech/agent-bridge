@@ -24,14 +24,14 @@ export default function SessionDetailPage({ params }: Readonly<{ params: Promise
           <ArrowLeft size={14} /> {t('session.backToSessions')}
         </a>
         <Heading as="h2" size="lg">{session.projectName}</Heading>
-        <Text variant="muted" size="sm">Agent: {session.agentName}</Text>
+        <Text variant="muted" size="sm">{t('session.agentPrefix')}: {session.agentName}</Text>
       </div>
 
       <Tabs defaultValue="timeline">
         <TabsList>
           <TabsTrigger value="timeline"><span className="inline-flex items-center gap-1.5"><ClockCounterClockwise size={15} weight="duotone" /> {t('session.timeline')}</span></TabsTrigger>
-          <TabsTrigger value="instructions"><span className="inline-flex items-center gap-1.5"><Code size={15} weight="duotone" /> Instructions</span></TabsTrigger>
-          <TabsTrigger value="info"><span className="inline-flex items-center gap-1.5"><Info size={15} weight="duotone" /> Info</span></TabsTrigger>
+          <TabsTrigger value="instructions"><span className="inline-flex items-center gap-1.5"><Code size={15} weight="duotone" /> {t('session.instructions')}</span></TabsTrigger>
+          <TabsTrigger value="info"><span className="inline-flex items-center gap-1.5"><Info size={15} weight="duotone" /> {t('session.info')}</span></TabsTrigger>
         </TabsList>
         <TabsContent value="timeline"><TimelineTab sessionId={id} /></TabsContent>
         <TabsContent value="instructions"><InstructionsTab session={session} /></TabsContent>

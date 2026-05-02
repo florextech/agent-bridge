@@ -27,10 +27,10 @@ export default function SetupPage() {
     try {
       await bridgeApi.setupAdmin(form);
       const res = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
-      if (res?.error) setError('Account created but login failed. Go to /login.');
+      if (res?.error) setError(t('auth.loginFailedAfterSetup'));
       else globalThis.location.href = '/';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Setup failed');
+      setError(err instanceof Error ? err.message : t('auth.setupFailed'));
     }
   };
 
