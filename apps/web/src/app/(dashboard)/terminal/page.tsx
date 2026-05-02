@@ -27,7 +27,7 @@ export default function TerminalPage() {
       const n = p.filter((t) => t.id !== id);
       if (!n.length) return p;
       if (activeTab === id) {
-        setActiveTab(n.at(-1).id);
+        setActiveTab(n.at(-1)?.id ?? '');
       }
       return n;
     });
@@ -64,6 +64,7 @@ export default function TerminalPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
                   className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[rgb(239_68_68/0.15)] text-(--muted) hover:text-(--danger) transition-all"
+                  title="Close tab"
                 >
                   <X size={10} />
                 </button>
@@ -123,7 +124,7 @@ function TerminalPanel() {
 
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
-      term.open(termRef.current!);
+      term.open(termRef.current ?? document.createElement('div'));
       fitAddon.fit();
       setTimeout(() => fitAddon.fit(), 150);
 
