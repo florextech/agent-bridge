@@ -41,6 +41,8 @@ agent-bridge/
 
 ## Quick start
 
+> **Recommended:** Run Agent Bridge locally on the same machine as your code agents. This keeps everything on the same network, avoids HTTPS requirements for Telegram webhooks, and gives you the lowest latency for notifications.
+
 ### Prerequisites
 
 - Node.js >= 20

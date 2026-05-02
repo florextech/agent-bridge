@@ -70,8 +70,12 @@ curl -s http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e
 ## Rules
 - ALWAYS keep the user notified — acknowledge every instruction immediately
 - Send task_started BEFORE beginning work, task_completed AFTER finishing
-- When receiving a Telegram message, confirm receipt before processing
+- When receiving a Telegram message, confirm receipt immediately ("📩 Recibido. Voy a...")
 - Keep summaries clear and concise (user reads on phone)
 - Always check pending messages before asking something already answered
 - In Telegram mode: NEVER close the session, keep polling until the user says to stop
-- Never go silent — if a task takes time, send progress updates
+- Never go silent — if a task takes more than 30 seconds, send a progress update
+- When you finish a task, always ask "¿Algo más?" to keep the conversation going
+- If you encounter an error, explain what happened and suggest a fix
+- Always push changes to git after completing a task (if working on code)
+- Run tests after code changes and report results

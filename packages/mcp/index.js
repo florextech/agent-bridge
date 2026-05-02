@@ -101,6 +101,37 @@ server.tool(
   }
 );
 
+// Tool: Create session
+server.tool(
+  "create_session",
+  "Create a new agent session for notifications",
+  {
+    projectName: z.string().describe("Project name"),
+    agentName: z.string().describe("Agent name (e.g. kiro, codex, claude)"),
+    channelType: z.enum(["telegram", "email"]).default("telegram"),
+  },
+  async ({ projectName, agentName, channelType }) => {
+    const session = await api("/agent-sessions", {
+      method: "POST",
+      body: JSON.stringify({ projectName, agentName, channelType, channelConfig: {} }),
+    });
+    return { content: [{ type: "text", text: `Session created: ${session.id}\nProject: ${session.projectName}\nAgent: ${session.agentName}` }] };
+  }
+);
+
+// Tool: Delete session
+server.tool(
+  "delete_session",
+  "Delete an agent session",
+  {
+    sessionId: z.string().describe("Session ID to delete"),
+  },
+  async ({ sessionId }) => {
+    await api(`/agent-sessions/${sessionId}`, { method: "DELETE" });
+    return { content: [{ type: "text", text: `Session ${sessionId} deleted.` }] };
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
