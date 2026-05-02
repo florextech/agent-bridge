@@ -62,6 +62,7 @@
     "noUsers": "No users linked yet. Connect your bot and share the link.",
     "active": "active",
     "paused": "paused",
+    "pending": "pending",
     "quickSession": "Quick Session",
     "quickSessionDesc": "Create a session that notifies all authorized users.",
     "projectName": "Project",

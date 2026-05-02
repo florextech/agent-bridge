@@ -62,6 +62,7 @@
     "noUsers": "Aún no hay usuarios vinculados. Conecta tu bot y comparte el enlace.",
     "active": "activo",
     "paused": "pausado",
+    "pending": "pendiente",
     "quickSession": "Sesión Rápida",
     "quickSessionDesc": "Crea una sesión que notifica a todos los usuarios autorizados.",
     "projectName": "Proyecto",

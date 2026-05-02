@@ -142,7 +142,7 @@ export class TelegramController implements OnModuleInit {
     if (msg.text === '/start') {
       await this.users.upsert(chatId, username, firstName);
       this.logger.log(`User linked: ${firstName || username || chatId} (${chatId})`);
-      this.sendReply(chatId, `✅ *Linked!*\n\nYou'll now receive agent notifications here.\n\n_Agent Bridge_`);
+      this.sendReply(chatId, `⏳ *Request sent!*\n\nAn admin needs to authorize you before you receive notifications.\n\n_Agent Bridge_`);
       return;
     }
 

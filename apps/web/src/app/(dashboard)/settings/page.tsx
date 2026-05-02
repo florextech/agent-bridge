@@ -126,7 +126,7 @@ function ConnectionsTab({ botToken, setBotToken, botUsername, setBotUsername }: 
                   <p className="font-medium text-xs truncate">{u.firstName || u.username || u.chatId}</p>
                   <p className="text-[10px] text-(--muted)">{u.username ? `@${u.username}` : `ID: ${u.chatId}`}</p>
                 </div>
-                <Badge tone={u.authorized ? 'success' : 'neutral'}>{u.authorized ? t('settings.active') : t('settings.paused')}</Badge>
+                <Badge tone={u.authorized ? 'success' : 'warning'}>{u.authorized ? t('settings.active') : t('settings.pending')}</Badge>
                 <button onClick={() => toggleAuth(u.chatId)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--foreground) transition-colors">
                   <UserCheck size={14} weight={u.authorized ? 'fill' : 'regular'} />
                 </button>

@@ -56,7 +56,7 @@ model TelegramUser {
   chatId     String   @unique @map("chat_id")
   username   String?
   firstName  String?  @map("first_name")
-  authorized Boolean  @default(true)
+  authorized Boolean  @default(false)
   linkedAt   DateTime @default(now()) @map("linked_at")
 
   @@map("telegram_users")
