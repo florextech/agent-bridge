@@ -3,13 +3,13 @@
 /**
  * Agent Bridge Terminal Agent (PTY)
  *
- * Runs a real shell on your local machine with full interactive support.
- * Connects to the API via WebSocket so the dashboard terminal can control it.
+ * Runs on your local machine. Each browser tab gets its own shell session.
+ * Connects multiple WebSocket sessions to the API.
  *
  * Usage:
  *   node apps/terminal-agent.js --api http://localhost:3001
  *   node apps/terminal-agent.js --api https://your-api.com --cwd /path/to/project
- *   node apps/terminal-agent.js --api http://localhost:3001 --shell /bin/zsh
+ *   node apps/terminal-agent.js --shell /bin/bash --sessions 4
  */
 
 const pty = require('node-pty');
@@ -24,21 +24,23 @@ function getArg(name) {
 const apiUrl = (getArg('api') || 'http://localhost:3001').replace('http', 'ws');
 const cwd = getArg('cwd') || process.cwd();
 const shellPath = getArg('shell') || process.env.SHELL || '/bin/zsh';
+const maxSessions = Number.parseInt(getArg('sessions') || '4', 10);
 
 const log = (msg) => console.log(`[${new Date().toLocaleTimeString()}] ${msg}`);
 
-let ptyProcess = null;
+let sessionCount = 0;
 
-function connect() {
+function createSession() {
+  if (sessionCount >= maxSessions) return;
+  sessionCount++;
+  const id = sessionCount;
+
   const ws = new WebSocket(`${apiUrl}/ws/terminal-agent`);
 
   ws.on('open', () => {
-    log('✅ Connected to Agent Bridge API');
-    log(`   Shell: ${shellPath}`);
-    log(`   CWD:   ${cwd}`);
+    log(`🖥️  Session ${id} connected`);
 
-    // Spawn a real shell
-    ptyProcess = pty.spawn(shellPath, [], {
+    const proc = pty.spawn(shellPath, [], {
       name: 'xterm-256color',
       cols: 120,
       rows: 30,
@@ -46,48 +48,45 @@ function connect() {
       env: { ...process.env, TERM: 'xterm-256color' },
     });
 
-    // Forward shell output to API
-    ptyProcess.onData((data) => {
-      if (ws.readyState === 1) {
-        ws.send(JSON.stringify({ type: 'output', data }));
-      }
+    proc.onData((data) => {
+      if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'output', data }));
     });
 
-    ptyProcess.onExit(({ exitCode }) => {
-      log(`Shell exited (${exitCode}). Restarting...`);
-      if (ws.readyState === 1) {
-        ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
-      }
+    proc.onExit(({ exitCode }) => {
+      log(`🖥️  Session ${id} shell exited (${exitCode})`);
+      if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'exit', code: exitCode }));
     });
 
-    ws.send(JSON.stringify({ type: 'register', cwd, shell: shellPath }));
+    ws.on('message', (raw) => {
+      const msg = JSON.parse(raw.toString());
+      if (msg.event === 'input' && msg.data) proc.write(msg.data);
+      if (msg.event === 'exec' && msg.data) proc.write(msg.data + '\n');
+      if (msg.event === 'resize' && msg.cols && msg.rows) proc.resize(msg.cols, msg.rows);
+    });
+
+    ws.on('close', () => {
+      log(`🖥️  Session ${id} disconnected`);
+      proc.kill();
+      sessionCount--;
+      // Reconnect to keep pool full
+      setTimeout(createSession, 1000);
+    });
   });
 
-  ws.on('message', (raw) => {
-    const msg = JSON.parse(raw.toString());
-    if (msg.event === 'input' && msg.data && ptyProcess) {
-      ptyProcess.write(msg.data);
-    }
-    if (msg.event === 'exec' && msg.data && ptyProcess) {
-      ptyProcess.write(msg.data + '\n');
-    }
-    if (msg.event === 'resize' && msg.cols && msg.rows && ptyProcess) {
-      ptyProcess.resize(msg.cols, msg.rows);
-    }
+  ws.on('error', () => {
+    sessionCount--;
+    setTimeout(createSession, 3000);
   });
-
-  ws.on('close', () => {
-    log('⚠️ Disconnected. Reconnecting in 3s...');
-    if (ptyProcess) { ptyProcess.kill(); ptyProcess = null; }
-    setTimeout(connect, 3000);
-  });
-
-  ws.on('error', () => {});
 }
 
 log('🖥️  Agent Bridge Terminal Agent');
-log(`   API:   ${apiUrl}`);
-log(`   Shell: ${shellPath}`);
-log(`   CWD:   ${cwd}`);
+log(`   API:      ${apiUrl}`);
+log(`   Shell:    ${shellPath}`);
+log(`   CWD:      ${cwd}`);
+log(`   Sessions: ${maxSessions}`);
 log('');
-connect();
+
+// Create initial pool of sessions
+for (let i = 0; i < maxSessions; i++) {
+  setTimeout(() => createSession(), i * 500);
+}

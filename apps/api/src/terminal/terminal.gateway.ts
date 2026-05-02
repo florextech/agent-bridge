@@ -9,62 +9,96 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   @WebSocketServer()
   server!: Server;
 
-  private agent: WebSocket | null = null;
-  private browserClients = new Set<WebSocket>();
+  // Map browser client → its paired agent
+  private clientToAgent = new Map<WebSocket, WebSocket>();
+  private agentToClient = new Map<WebSocket, WebSocket>();
+  private pendingClients: WebSocket[] = [];
+  private availableAgents: WebSocket[] = [];
 
   handleConnection(client: WebSocket): void {
-    this.browserClients.add(client);
-    const mode = this.agent ? 'remote PTY' : 'no agent';
-    client.send(JSON.stringify({ type: 'output', data: `\x1b[90m● Connected (${mode})\x1b[0m\r\n` }));
+    this.logger.log('Browser client connected');
+    // Try to pair with an available agent
+    const agent = this.availableAgents.shift();
+    if (agent && agent.readyState === 1) {
+      this.pair(client, agent);
+      client.send(JSON.stringify({ type: 'output', data: '\x1b[32m● Connected (remote PTY)\x1b[0m\r\n' }));
+    } else {
+      this.pendingClients.push(client);
+      client.send(JSON.stringify({ type: 'output', data: '\x1b[33m● Waiting for agent...\x1b[0m\r\n' }));
+    }
   }
 
   handleDisconnect(client: WebSocket): void {
-    this.browserClients.delete(client);
+    const agent = this.clientToAgent.get(client);
+    if (agent) {
+      this.clientToAgent.delete(client);
+      this.agentToClient.delete(agent);
+      // Return agent to pool
+      if (agent.readyState === 1) this.availableAgents.push(agent);
+    }
+    this.pendingClients = this.pendingClients.filter((c) => c !== client);
   }
 
   @SubscribeMessage('input')
-  handleInput(_client: WebSocket, payload: string): void {
-    if (this.agent && this.agent.readyState === 1) {
-      this.agent.send(JSON.stringify({ event: 'input', data: payload }));
+  handleInput(client: WebSocket, payload: string): void {
+    const agent = this.clientToAgent.get(client);
+    if (agent && agent.readyState === 1) {
+      agent.send(JSON.stringify({ event: 'input', data: payload }));
     }
   }
 
   @SubscribeMessage('exec')
-  handleExec(_client: WebSocket, payload: string): void {
-    if (this.agent && this.agent.readyState === 1) {
-      this.agent.send(JSON.stringify({ event: 'exec', data: payload }));
+  handleExec(client: WebSocket, payload: string): void {
+    const agent = this.clientToAgent.get(client);
+    if (agent && agent.readyState === 1) {
+      agent.send(JSON.stringify({ event: 'exec', data: payload }));
     }
   }
 
   @SubscribeMessage('resize')
-  handleResize(_client: WebSocket, payload: string | { cols: number; rows: number }): void {
+  handleResize(client: WebSocket, payload: string | { cols: number; rows: number }): void {
     const data = typeof payload === 'string' ? JSON.parse(payload) as { cols: number; rows: number } : payload;
-    if (this.agent && this.agent.readyState === 1 && data?.cols && data?.rows) {
-      this.agent.send(JSON.stringify({ event: 'resize', cols: data.cols, rows: data.rows }));
+    const agent = this.clientToAgent.get(client);
+    if (agent && agent.readyState === 1 && data?.cols && data?.rows) {
+      agent.send(JSON.stringify({ event: 'resize', cols: data.cols, rows: data.rows }));
     }
   }
 
   registerAgent(ws: WebSocket): void {
-    this.agent = ws;
-    this.logger.log('Remote terminal agent (PTY) registered');
+    this.logger.log('Terminal agent registered');
 
-    this.browserClients.forEach((c) => {
-      if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '\x1b[32m● Remote agent connected\x1b[0m\r\n' }));
-    });
-
-    ws.on('message', (raw: Buffer) => {
-      const msg = JSON.parse(raw.toString());
-      this.browserClients.forEach((client) => {
-        if (client.readyState === 1) client.send(JSON.stringify(msg));
-      });
-    });
+    // Pair with a pending client or add to pool
+    const client = this.pendingClients.shift();
+    if (client && client.readyState === 1) {
+      this.pair(client, ws);
+      client.send(JSON.stringify({ type: 'output', data: '\x1b[32m● Agent connected\x1b[0m\r\n' }));
+    } else {
+      this.availableAgents.push(ws);
+    }
 
     ws.on('close', () => {
-      this.agent = null;
-      this.logger.log('Remote terminal agent disconnected');
-      this.browserClients.forEach((c) => {
-        if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '\r\n\x1b[31m● Agent disconnected\x1b[0m\r\n' }));
-      });
+      this.logger.log('Terminal agent disconnected');
+      const pairedClient = this.agentToClient.get(ws);
+      if (pairedClient) {
+        this.clientToAgent.delete(pairedClient);
+        this.agentToClient.delete(ws);
+        if (pairedClient.readyState === 1) {
+          pairedClient.send(JSON.stringify({ type: 'output', data: '\r\n\x1b[31m● Agent disconnected\x1b[0m\r\n' }));
+        }
+      }
+      this.availableAgents = this.availableAgents.filter((a) => a !== ws);
+    });
+  }
+
+  private pair(client: WebSocket, agent: WebSocket): void {
+    this.clientToAgent.set(client, agent);
+    this.agentToClient.set(agent, client);
+
+    // Forward agent output only to its paired client
+    agent.on('message', (raw: Buffer) => {
+      if (client.readyState === 1) {
+        client.send(raw.toString());
+      }
     });
   }
 }

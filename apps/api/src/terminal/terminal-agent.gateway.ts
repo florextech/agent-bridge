@@ -10,7 +10,7 @@ export class TerminalAgentGateway implements OnGatewayConnection {
   constructor(private readonly terminal: TerminalGateway) {}
 
   handleConnection(client: WebSocket): void {
-    this.logger.log('Terminal agent connecting...');
+    this.logger.log('Terminal agent session connecting');
     this.terminal.registerAgent(client);
   }
 }
