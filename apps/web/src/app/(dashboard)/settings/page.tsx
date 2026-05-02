@@ -1,23 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Badge, Button, Heading, Input, Label, Text, Tabs, TabsList, TabsTrigger, TabsContent } from '@florexlabs/ui';
 import { TelegramLogo, Robot, Users, UserCheck, UserMinus, Copy, Check, Envelope, UserPlus, Trash, Shield, WhatsappLogo, DiscordLogo, SlackLogo, EnvelopeSimple } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import { ChannelType } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
-import type { TelegramUser, AppUser } from '@/lib/api';
+import type { AppUser } from '@/lib/api';
+import { useTelegramStatus, useTelegramUsers, useSetupTelegram, useToggleTelegramAuth, useRemoveTelegramUser, useCreateSession, useUsers, useInvite, useDeleteUser } from '@/lib/queries';
 
 export default function SettingsPage() {
   const { t } = useI18n();
   const [botToken, setBotToken] = useState('');
-  const [botUsername, setBotUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-    bridgeApi.getTelegramStatus().then((s) => {
-      if (s.botUsername) setBotUsername(s.botUsername);
-    }).catch(() => {});
-  }, []);
+  const { data: telegramStatus } = useTelegramStatus();
+  const botUsername = telegramStatus?.botUsername ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,7 +29,7 @@ export default function SettingsPage() {
           <TabsTrigger value="team"><span className="inline-flex items-center gap-1.5"><Users size={15} weight="duotone" /> Team</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value="connections"><ConnectionsTab botToken={botToken} setBotToken={setBotToken} botUsername={botUsername} setBotUsername={setBotUsername} /></TabsContent>
+        <TabsContent value="connections"><ConnectionsTab botToken={botToken} setBotToken={setBotToken} botUsername={botUsername} /></TabsContent>
         <TabsContent value="sessions"><SessionsTab botToken={botToken} /></TabsContent>
         <TabsContent value="team"><TeamTab /></TabsContent>
       </Tabs>
@@ -42,33 +38,29 @@ export default function SettingsPage() {
 }
 
 /* ─── Connections ─── */
-function ConnectionsTab({ botToken, setBotToken, botUsername, setBotUsername }: { botToken: string; setBotToken: (v: string) => void; botUsername: string | null; setBotUsername: (v: string | null) => void }) {
+function ConnectionsTab({ botToken, setBotToken, botUsername }: { botToken: string; setBotToken: (v: string) => void; botUsername: string | null }) {
   const { t } = useI18n();
-  const [users, setUsers] = useState<TelegramUser[]>([]);
+  const { data: users = [] } = useTelegramUsers();
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const setupMutation = useSetupTelegram();
+  const toggleAuthMutation = useToggleTelegramAuth();
+  const removeMutation = useRemoveTelegramUser();
 
-  useEffect(() => {
-    bridgeApi.getTelegramUsers().then(setUsers).catch(() => {});
-    const interval = setInterval(() => {
-      bridgeApi.getTelegramUsers().then(setUsers).catch(() => {});
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const setupBot = async () => {
+  const setupBot = () => {
     if (!botToken) return setResult({ ok: false, msg: 'Enter your bot token first' });
-    const res = await bridgeApi.setupTelegram(botToken);
-    if (res.ok && res.botUsername) {
-      setBotUsername(res.botUsername);
-      setResult({ ok: true, msg: `Connected to @${res.botUsername}!` });
-    } else {
-      setResult({ ok: false, msg: res.error || 'Failed' });
-    }
+    setupMutation.mutate(botToken, {
+      onSuccess: (res) => {
+        if (res.ok && res.botUsername) {
+          setResult({ ok: true, msg: `Connected to @${res.botUsername}!` });
+        } else {
+          setResult({ ok: false, msg: res.error || 'Failed' });
+        }
+      },
+      onError: (err) => setResult({ ok: false, msg: err.message }),
+    });
   };
 
-  const toggleAuth = async (chatId: string) => { await bridgeApi.toggleTelegramAuth(chatId); setUsers(await bridgeApi.getTelegramUsers()); };
-  const removeUser = async (chatId: string) => { await bridgeApi.removeTelegramUser(chatId); setUsers(await bridgeApi.getTelegramUsers()); };
   const copyLink = () => { if (botUsername) { navigator.clipboard.writeText(`https://t.me/${botUsername}`); setCopied(true); setTimeout(() => setCopied(false), 2000); } };
 
   return (
@@ -128,16 +120,16 @@ function ConnectionsTab({ botToken, setBotToken, botUsername, setBotUsername }: 
                 </div>
                 <Badge tone={u.authorized ? 'success' : 'warning'}>{u.authorized ? t('settings.active') : t('settings.pending')}</Badge>
                 {!u.authorized && (
-                  <button onClick={() => toggleAuth(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(189_241_70/0.1)] text-(--muted) hover:text-(--brand-600) transition-colors" title="Approve">
+                  <button onClick={() => toggleAuthMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(189_241_70/0.1)] text-(--muted) hover:text-(--brand-600) transition-colors" title="Approve">
                     <UserCheck size={14} />
                   </button>
                 )}
                 {u.authorized && (
-                  <button onClick={() => toggleAuth(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(245_158_11/0.1)] text-(--muted) hover:text-(--warning) transition-colors" title="Revoke">
+                  <button onClick={() => toggleAuthMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(245_158_11/0.1)] text-(--muted) hover:text-(--warning) transition-colors" title="Revoke">
                     <UserMinus size={14} />
                   </button>
                 )}
-                <button onClick={() => removeUser(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(239_68_68/0.1)] text-(--muted) hover:text-(--danger) transition-colors" title="Remove">
+                <button onClick={() => removeMutation.mutate(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(239_68_68/0.1)] text-(--muted) hover:text-(--danger) transition-colors" title="Remove">
                   <Trash size={14} />
                 </button>
               </div>
@@ -163,13 +155,16 @@ function SessionsTab({ botToken }: { botToken: string }) {
   const [form, setForm] = useState({ projectName: '', agentName: '' });
   const [session, setSession] = useState<{ id: string } | null>(null);
   const [copiedKey, setCopiedKey] = useState('');
+  const createMutation = useCreateSession();
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const copy = (key: string, text: string) => { navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(''), 2000); };
 
-  const create = async () => {
-    const s = await bridgeApi.createSession({ projectName: form.projectName || 'my-project', agentName: form.agentName || 'codex', channelType: ChannelType.Telegram, channelConfig: { botToken } });
-    setSession(s);
+  const create = () => {
+    createMutation.mutate(
+      { projectName: form.projectName || 'my-project', agentName: form.agentName || 'codex', channelType: ChannelType.Telegram, channelConfig: { botToken } },
+      { onSuccess: (s) => setSession(s) },
+    );
   };
 
   const apiUrl = typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : 'http://localhost:3001';
@@ -231,25 +226,23 @@ function SessionsTab({ botToken }: { botToken: string }) {
 /* ─── Team ─── */
 function TeamTab() {
   const { t } = useI18n();
-  const [users, setUsers] = useState<AppUser[]>([]);
+  const { data: users = [] } = useUsers();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const inviteMutation = useInvite();
+  const deleteMutation = useDeleteUser();
 
-  useEffect(() => { bridgeApi.getUsers().then(setUsers).catch(() => {}); }, []);
-
-  const sendInvite = async () => {
+  const sendInvite = () => {
     if (!inviteEmail) return;
-    try {
-      await bridgeApi.invite({ email: inviteEmail, role: inviteRole });
-      setResult({ ok: true, msg: `Invitation sent to ${inviteEmail}` });
-      setInviteEmail('');
-    } catch (err) {
-      setResult({ ok: false, msg: err instanceof Error ? err.message : 'Failed' });
-    }
+    inviteMutation.mutate(
+      { email: inviteEmail, role: inviteRole },
+      {
+        onSuccess: () => { setResult({ ok: true, msg: `Invitation sent to ${inviteEmail}` }); setInviteEmail(''); },
+        onError: (err) => setResult({ ok: false, msg: err.message }),
+      },
+    );
   };
-
-  const removeUser = async (id: string) => { await bridgeApi.deleteUser(id); setUsers(await bridgeApi.getUsers()); };
 
   return (
     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -303,7 +296,7 @@ function TeamTab() {
                   {u.role === 'admin' && <Shield size={10} weight="bold" className="mr-0.5" />}
                   {u.role}
                 </Badge>
-                <button onClick={() => removeUser(u.id)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--danger) transition-colors">
+                <button onClick={() => deleteMutation.mutate(u.id)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--danger) transition-colors">
                   <Trash size={14} />
                 </button>
               </div>

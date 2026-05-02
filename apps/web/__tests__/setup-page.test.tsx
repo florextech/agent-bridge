@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock window.location
 Object.defineProperty(window, 'location', { value: { href: '' }, writable: true });
@@ -26,16 +27,21 @@ vi.mock('@florexlabs/ui', async () => {
 
 import SetupPage from '@/app/(auth)/setup/page';
 
+function wrapper({ children }: { children: React.ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return React.createElement(QueryClientProvider, { client: qc }, children);
+}
+
 describe('SetupPage', () => {
   it('renders inputs after loading', async () => {
-    render(<SetupPage />);
+    render(React.createElement(SetupPage), { wrapper });
     await waitFor(() => {
       expect(screen.getAllByTestId('Input')).toHaveLength(3);
     });
   });
 
   it('renders create admin button after loading', async () => {
-    render(<SetupPage />);
+    render(React.createElement(SetupPage), { wrapper });
     await waitFor(() => {
       expect(screen.getByTestId('Button')).toBeInTheDocument();
     });

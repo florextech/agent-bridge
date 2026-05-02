@@ -1,34 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { EmptyState, Heading, Spinner, Status, Text } from '@florexlabs/ui';
 import { ListChecks, Pulse, XCircle, Trash, ArrowRight } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
-import type { Session } from '@agent-bridge/core';
-import { bridgeApi } from '@/lib/api';
+import { useSessions, useDeleteSession } from '@/lib/queries';
 
 export default function SessionsPage() {
   const { t } = useI18n();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    bridgeApi.getSessions()
-      .then(setSessions)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: sessions = [], isLoading, error } = useSessions();
+  const deleteMutation = useDeleteSession();
 
   const active = sessions.filter((s) => s.status === 'active').length;
 
-  const remove = async (id: string) => {
-    await bridgeApi.deleteSession(id);
-    setSessions((prev) => prev.filter((s) => s.id !== id));
-  };
-
-  if (loading) return <div className="flex items-center justify-center h-40"><Spinner className="size-5" /></div>;
-  if (error) return <Text variant="danger">{error}</Text>;
+  if (isLoading) return <div className="flex items-center justify-center h-40"><Spinner className="size-5" /></div>;
+  if (error) return <Text variant="danger">{error.message}</Text>;
 
   return (
     <div className="flex flex-col gap-6">
@@ -71,7 +56,7 @@ export default function SessionsPage() {
                 </div>
               </div>
               <button
-                onClick={(e) => { e.preventDefault(); remove(s.id); }}
+                onClick={(e) => { e.preventDefault(); deleteMutation.mutate(s.id); }}
                 className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgb(239_68_68/0.1)] transition-all text-(--muted) hover:text-(--danger)"
               >
                 <Trash size={15} />

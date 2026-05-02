@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { use } from 'react';
 import { Badge, DataList, DataListItem, EmptyState, Heading, Spinner, Status, Tabs, TabsList, TabsTrigger, TabsContent, Text, Timeline, TimelineItem } from '@florexlabs/ui';
 import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText, Copy, Check, User, Robot, ClockCounterClockwise, Code, Info } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
-import type { AgentEvent, ChannelResponse, Session } from '@agent-bridge/core';
-import { bridgeApi } from '@/lib/api';
+import { useSession, useEvents, useResponses } from '@/lib/queries';
 import type { ReactNode } from 'react';
 
 const EVENT_ICONS: Record<string, ReactNode> = {
@@ -19,20 +18,15 @@ const EVENT_ICONS: Record<string, ReactNode> = {
   message: <ChatText size={16} weight="duotone" className="text-(--muted)" />,
 };
 
-export default function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function SessionDetailPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = use(params);
   const { t } = useI18n();
-  const [session, setSession] = useState<Session | null>(null);
-  const [events, setEvents] = useState<AgentEvent[]>([]);
-  const [responses, setResponses] = useState<ChannelResponse[]>([]);
-  const [error, setError] = useState('');
+  const { data: session, isLoading: sessionLoading, error: sessionError } = useSession(id);
+  const { data: events = [] } = useEvents(id);
+  const { data: responses = [] } = useResponses(id);
   const [copiedKey, setCopiedKey] = useState('');
 
-  useEffect(() => {
-    Promise.all([bridgeApi.getSession(id), bridgeApi.getEvents(id), bridgeApi.getResponses(id)])
-      .then(([s, e, r]) => { setSession(s); setEvents(e); setResponses(r); })
-      .catch((e: Error) => setError(e.message));
-  }, [id]);
+  const error = sessionError?.message ?? '';
 
   const copy = (key: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -41,11 +35,11 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   };
 
   if (error) return <Text variant="danger">{error}</Text>;
-  if (!session) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
+  if (sessionLoading || !session) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
 
-  const apiUrl = typeof window !== 'undefined'
-    ? window.location.origin.replace(':3000', ':3001')
-    : 'http://localhost:3001';
+  const apiUrl = globalThis.window === undefined
+    ? 'http://localhost:3001'
+    : globalThis.location.origin.replace(':3000', ':3001');
 
   const agentPrompt = `You have access to Agent Bridge for notifications.
 Session ID: ${session.id}

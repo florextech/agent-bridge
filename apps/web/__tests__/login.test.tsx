@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('next-auth/react', () => ({ signIn: vi.fn() }));
 vi.mock('@/lib/api', () => ({
@@ -22,14 +23,19 @@ vi.mock('@florexlabs/ui', async () => {
 
 import LoginPage from '@/app/(auth)/login/page';
 
+function wrapper({ children }: { children: React.ReactNode }) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return React.createElement(QueryClientProvider, { client: qc }, children);
+}
+
 describe('LoginPage', () => {
   it('renders email and password inputs', () => {
-    render(<LoginPage />);
+    render(React.createElement(LoginPage), { wrapper });
     expect(screen.getAllByTestId('Input')).toHaveLength(2);
   });
 
   it('renders sign in button', () => {
-    render(<LoginPage />);
+    render(React.createElement(LoginPage), { wrapper });
     expect(screen.getByTestId('Button')).toBeInTheDocument();
   });
 });

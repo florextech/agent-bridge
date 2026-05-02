@@ -5,22 +5,18 @@ import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
 import { useI18n } from '@/lib/i18n';
 import { Logo } from '@/components/Logo';
-import { bridgeApi } from '@/lib/api';
+import { useUserCount } from '@/lib/queries';
 
 export default function LoginPage() {
   const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [needsSetup, setNeedsSetup] = useState(false);
+  const { data } = useUserCount();
 
   useEffect(() => {
-    bridgeApi.getUserCount().then((r) => { if (r.count === 0) setNeedsSetup(true); }).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (needsSetup) globalThis.location.href = '/setup';
-  }, [needsSetup]);
+    if (data?.count === 0) globalThis.location.href = '/setup';
+  }, [data]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
