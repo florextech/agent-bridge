@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import en from '@/messages/en.json';
 import es from '@/messages/es.json';
@@ -15,12 +15,15 @@ const I18nContext = createContext<{ t: TFunc; locale: string; toggle: () => void
   toggle: () => {},
 });
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState('en');
+function getInitialLocale(): string {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('locale') || 'en';
+  }
+  return 'en';
+}
 
-  useEffect(() => {
-    setLocale(localStorage.getItem('locale') || 'en');
-  }, []);
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocale] = useState(getInitialLocale);
 
   const toggle = useCallback(() => {
     const next = locale === 'en' ? 'es' : 'en';
