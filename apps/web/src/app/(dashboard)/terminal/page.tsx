@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Plus, X, Terminal } from '@phosphor-icons/react';
+import { Plus, X, Terminal, ShieldWarning } from '@phosphor-icons/react';
 
 interface TermTab { id: string; label: string }
 
@@ -29,7 +29,15 @@ export default function TerminalPage() {
   if (!tabs.length) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)] rounded-xl border border-(--border) overflow-hidden bg-[#0a0c0b]">
+    <div className="flex flex-col gap-3 h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)]">
+      {/* Security warning */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[rgb(245_158_11/0.08)] border border-[rgb(245_158_11/0.25)] shrink-0">
+        <ShieldWarning size={18} weight="duotone" className="text-(--warning) shrink-0" />
+        <p className="text-xs text-(--warning)">This terminal has full shell access to the connected machine. Use with caution.</p>
+        <span className="ml-auto px-2 py-0.5 rounded-full bg-[rgb(245_158_11/0.15)] text-[10px] font-semibold text-(--warning) shrink-0">Experimental</span>
+      </div>
+
+      <div className="flex-1 min-h-0 rounded-xl border border-(--border) overflow-hidden bg-[#0a0c0b] flex flex-col">
       {/* Tab bar */}
       <div className="flex items-center bg-[#111513] border-b border-(--border) shrink-0">
         <div className="flex items-center flex-1 overflow-x-auto">
@@ -67,6 +75,7 @@ export default function TerminalPage() {
           <TerminalPanel />
         </div>
       ))}
+      </div>
     </div>
   );
 }
@@ -89,7 +98,6 @@ function TerminalPanel() {
         fontSize: 13,
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
         scrollback: 5000,
-        padding: 16,
         theme: {
           background: '#0a0c0b',
           foreground: '#edf6ee',
