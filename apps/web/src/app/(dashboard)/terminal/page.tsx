@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Heading, Text } from '@florexlabs/ui';
+import { Heading } from '@florexlabs/ui';
 
 export default function TerminalPage() {
   const termRef = useRef<HTMLDivElement>(null);
@@ -94,18 +94,15 @@ export default function TerminalPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-6rem)]">
-      <div className="flex items-center justify-between">
-        <div>
-          <Heading as="h2" size="lg">Terminal</Heading>
-          <Text variant="muted" size="sm">Remote shell access</Text>
-        </div>
+    <div className="flex flex-col gap-3 h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)]">
+      <div className="flex items-center justify-between shrink-0">
+        <Heading as="h2" size="lg">Terminal</Heading>
         <div className={`flex items-center gap-2 text-xs ${connected ? 'text-(--brand-600)' : 'text-(--danger)'}`}>
           <span className={`size-2 rounded-full ${connected ? 'bg-(--brand-600)' : 'bg-(--danger)'}`} />
           {connected ? 'Connected' : 'Disconnected'}
         </div>
       </div>
-      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden" />
+      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden min-h-0" />
     </div>
   );
 }
