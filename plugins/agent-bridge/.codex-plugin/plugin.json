@@ -1,0 +1,51 @@
+{
+  "name": "agent-bridge",
+  "version": "0.1.0",
+  "description": "Bridge plugin to connect coding agents with Agent Bridge sessions and Telegram notifications.",
+  "author": {
+    "name": "Florex Tech",
+    "email": "opensource@florexlabs.com",
+    "url": "https://github.com/florextech"
+  },
+  "homepage": "https://github.com/florextech/agent-bridge",
+  "repository": "https://github.com/florextech/agent-bridge",
+  "license": "MIT",
+  "keywords": [
+    "agent-bridge",
+    "telegram",
+    "notifications",
+    "agent-workflows"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks.json",
+  "mcpServers": "./.mcp.json",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Agent Bridge",
+    "shortDescription": "Send and receive agent updates through Agent Bridge.",
+    "longDescription": "Integrates coding agents with Agent Bridge sessions so tasks, approvals, and progress updates can flow between terminal and Telegram.",
+    "developerName": "Florex Tech",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/florextech/agent-bridge",
+    "privacyPolicyURL": "https://github.com/florextech/agent-bridge/blob/main/README.md",
+    "termsOfServiceURL": "https://github.com/florextech/agent-bridge/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Create an Agent Bridge session for this project and start task notifications.",
+      "Check unread Agent Bridge responses and mark them as read after processing.",
+      "Send task_started and task_completed events for my current work."
+    ],
+    "brandColor": "#0EA5E9",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "screenshots": [
+      "./assets/screenshot1.png",
+      "./assets/screenshot2.png",
+      "./assets/screenshot3.png"
+    ]
+  }
+}

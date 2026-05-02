@@ -1,0 +1,20 @@
+{
+  "name": "florex-marketplace",
+  "interface": {
+    "displayName": "Florex Local Marketplace"
+  },
+  "plugins": [
+    {
+      "name": "agent-bridge",
+      "source": {
+        "source": "local",
+        "path": "./plugins/agent-bridge"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

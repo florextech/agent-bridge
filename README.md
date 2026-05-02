@@ -175,6 +175,12 @@ const responses = await bridge.getUnreadResponses('SESSION_ID');
 await bridge.markRead('SESSION_ID');
 ```
 
+### Codex local plugin
+
+For a reusable local Codex plugin setup (install, configure, Telegram polling workflow), see:
+
+- `docs/codex-plugin.md`
+
 ### Run tests
 
 ```bash
