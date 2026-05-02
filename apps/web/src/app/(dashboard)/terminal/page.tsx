@@ -128,7 +128,7 @@ function TerminalPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div ref={termRef} className="flex-1 min-h-0" />
+      <div ref={termRef} className="flex-1 min-h-0 overflow-hidden [&_.xterm]:h-full [&_.xterm-viewport]:!overflow-y-auto" />
       <div className="flex items-center justify-end px-4 py-1 bg-[#111513] border-t border-(--border)">
         <div className={`flex items-center gap-1.5 text-[10px] ${connected ? 'text-(--brand-600)' : 'text-(--danger)'}`}>
           <span className={`size-1.5 rounded-full ${connected ? 'bg-(--brand-600)' : 'bg-(--danger)'}`} />
