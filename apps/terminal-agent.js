@@ -58,7 +58,7 @@ function createSession() {
     });
 
     ws.on('message', (raw) => {
-      const msg = JSON.parse(raw.toString());
+      const msg = JSON.parse(String(raw));
       if (msg.event === 'input' && msg.data) proc.write(msg.data);
       if (msg.event === 'exec' && msg.data) proc.write(msg.data + '\n');
       if (msg.event === 'resize' && msg.cols && msg.rows) proc.resize(msg.cols, msg.rows);
