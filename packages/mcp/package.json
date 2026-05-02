@@ -1,11 +1,24 @@
 {
-  "name": "@agent-bridge/mcp",
+  "name": "@florexlabs/agent-bridge-mcp",
   "version": "0.1.0",
-  "private": true,
+  "description": "MCP server for Agent Bridge — connect code agents with Telegram notifications",
+  "main": "index.js",
   "bin": {
     "agent-bridge-mcp": "./index.js"
   },
+  "keywords": ["mcp", "agent-bridge", "telegram", "notifications", "code-agents", "kiro", "codex", "claude"],
+  "author": "Florex Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/florextech/agent-bridge.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/florextech/agent-bridge",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.12.1"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

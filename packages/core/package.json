@@ -1,7 +1,7 @@
 {
-  "name": "@agent-bridge/core",
+  "name": "@florexlabs/agent-bridge-core",
   "version": "0.1.0",
-  "private": true,
+  "description": "Shared types, enums, and interfaces for Agent Bridge",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -14,5 +14,16 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist"
+  },
+  "keywords": ["agent-bridge", "types", "core"],
+  "author": "Florex Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/florextech/agent-bridge.git",
+    "directory": "packages/core"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
