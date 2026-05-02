@@ -97,25 +97,30 @@ function parseMessage(text) {
 
 function runAndReport(label, fullCommand) {
   log(`🔄 ${label}: ${fullCommand}`);
+  const start = Date.now();
   try {
     const output = execSync(fullCommand, { timeout: 300000, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
     const trimmed = (output || '').trim();
-    const summary = trimmed.length > 500 ? trimmed.slice(-500) + '...' : trimmed;
-    log(`✅ ${label} completed`);
-    // Send result back via agent event
+    const lastLines = trimmed.split('\n').slice(-8).join('\n');
+    log(`✅ ${label} completed in ${elapsed}s`);
+
+    const summary = `✅ *${label}* completed in ${elapsed}s\n\n\`\`\`\n${lastLines || '(no output)'}\n\`\`\``;
     fetch(`${apiUrl}/agent-events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, type: 'message', payload: { summary: `✅ ${label}\n\n${summary || '(no output)'}` } }),
+      body: JSON.stringify({ sessionId, type: 'task_completed', payload: { summary } }),
     }).catch(() => {});
   } catch (e) {
-    const stderr = e.stderr ? e.stderr.toString().trim().slice(-300) : '';
-    const msg = `❌ ${label} failed (exit ${e.status || '?'})\n\n${stderr || e.message}`;
-    log(`⚠️ ${label} failed`);
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    const stderr = e.stderr ? e.stderr.toString().trim().split('\n').slice(-6).join('\n') : e.message;
+    log(`⚠️ ${label} failed in ${elapsed}s`);
+
+    const summary = `❌ *${label}* failed in ${elapsed}s (exit ${e.status || '?'})\n\n\`\`\`\n${stderr}\n\`\`\``;
     fetch(`${apiUrl}/agent-events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, type: 'error', payload: { summary: msg } }),
+      body: JSON.stringify({ sessionId, type: 'error', payload: { summary } }),
     }).catch(() => {});
   }
 }
