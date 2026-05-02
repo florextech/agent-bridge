@@ -49,17 +49,32 @@ export class TelegramProvider implements MessagingProvider {
   }
 
   private formatMessage(event: AgentEvent): string {
-    const emoji: Record<string, string> = {
-      task_started: '🚀',
-      task_completed: '✅',
-      needs_review: '👀',
-      needs_approval: '🔐',
-      error: '❌',
-      test_results: '🧪',
-      message: '💬',
+    const styles: Record<string, { icon: string; label: string }> = {
+      task_started: { icon: '🚀', label: 'Task Started' },
+      task_completed: { icon: '✅', label: 'Task Completed' },
+      needs_review: { icon: '👀', label: 'Needs Review' },
+      needs_approval: { icon: '🔐', label: 'Needs Approval' },
+      error: { icon: '❌', label: 'Error' },
+      test_results: { icon: '🧪', label: 'Test Results' },
+      message: { icon: '💬', label: 'Message' },
     };
-    const icon = emoji[event.type] || '📨';
-    const summary = (event.payload['summary'] as string) || event.type;
-    return `${icon} *${event.type}*\n\n${summary}\n\n_Session: ${event.sessionId}_`;
+    const { icon, label } = styles[event.type] || { icon: '📨', label: event.type };
+    const summary = (event.payload['summary'] as string) || '';
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    const lines = [
+      `${icon}  *${label}*`,
+      '',
+    ];
+
+    if (summary) {
+      lines.push(summary);
+      lines.push('');
+    }
+
+    lines.push(`─────────────────────`);
+    lines.push(`⏱ ${time}  ·  📎 \`${event.sessionId.slice(0, 8)}\``);
+
+    return lines.join('\n');
   }
 }
