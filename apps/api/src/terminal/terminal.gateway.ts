@@ -16,6 +16,11 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   private availableAgents: WebSocket[] = [];
 
   handleConnection(client: WebSocket): void {
+    if (process.env['TERMINAL_ENABLED'] !== 'true') {
+      client.send(JSON.stringify({ type: 'output', data: '\x1b[31m● Terminal disabled. Set TERMINAL_ENABLED=true in env to enable.\x1b[0m\r\n' }));
+      client.close();
+      return;
+    }
     this.logger.log('Browser client connected');
     // Try to pair with an available agent
     const agent = this.availableAgents.shift();
