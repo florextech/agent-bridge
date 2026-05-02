@@ -31,11 +31,20 @@ export class TelegramProvider implements MessagingProvider {
 
     await Promise.all(
       targets.map(async (chatId) => {
-        const res = await fetch(url, {
+        const payload = { chat_id: chatId, text, parse_mode: 'Markdown' };
+        let res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+          body: JSON.stringify(payload),
         });
+        // Retry without Markdown if it fails (special chars can break Markdown)
+        if (!res.ok) {
+          res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text }),
+          });
+        }
         if (!res.ok) {
           const body = await res.text();
           this.logger.error(`Telegram API error for ${chatId}: ${res.status} ${body}`);
