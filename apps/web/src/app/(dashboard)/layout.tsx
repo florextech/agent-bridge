@@ -60,7 +60,7 @@ function NavLinks({ onNavigate }: { onNavigate: () => void }) {
 
   return (
     <div className="flex-1 px-3 py-2">
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-1.5">
         {links.map((l) => {
           const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
           return (

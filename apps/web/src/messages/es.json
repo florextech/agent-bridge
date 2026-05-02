@@ -79,7 +79,9 @@
     "inviteMember": "Invitar Miembro",
     "sendInvitation": "Enviar una invitación por correo",
     "sendInvite": "Enviar Invitación",
-    "teamMembers": "Miembros del Equipo"
+    "teamMembers": "Miembros del Equipo",
+    "connections": "Conexiones",
+    "comingSoon": "Próximamente"
   },
   "integration": {
     "eyebrow": "Desarrolladores",

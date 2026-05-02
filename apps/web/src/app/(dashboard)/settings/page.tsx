@@ -19,14 +19,14 @@ export default function SettingsPage() {
         <Text variant="muted" size="sm">{t('settings.subtitle')}</Text>
       </div>
 
-      <Tabs defaultValue="telegram">
+      <Tabs defaultValue="connections">
         <TabsList>
-          <TabsTrigger value="telegram"><span className="inline-flex items-center gap-1.5"><TelegramLogo size={15} weight="duotone" /> Telegram</span></TabsTrigger>
+          <TabsTrigger value="connections"><span className="inline-flex items-center gap-1.5"><TelegramLogo size={15} weight="duotone" /> {t('settings.connections')}</span></TabsTrigger>
           <TabsTrigger value="sessions"><span className="inline-flex items-center gap-1.5"><Robot size={15} weight="duotone" /> Sessions</span></TabsTrigger>
           <TabsTrigger value="team"><span className="inline-flex items-center gap-1.5"><Users size={15} weight="duotone" /> Team</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value="telegram"><TelegramTab botToken={botToken} setBotToken={setBotToken} /></TabsContent>
+        <TabsContent value="connections"><ConnectionsTab botToken={botToken} setBotToken={setBotToken} /></TabsContent>
         <TabsContent value="sessions"><SessionsTab botToken={botToken} /></TabsContent>
         <TabsContent value="team"><TeamTab /></TabsContent>
       </Tabs>
@@ -34,8 +34,8 @@ export default function SettingsPage() {
   );
 }
 
-/* ─── Telegram ─── */
-function TelegramTab({ botToken, setBotToken }: { botToken: string; setBotToken: (v: string) => void }) {
+/* ─── Connections ─── */
+function ConnectionsTab({ botToken, setBotToken }: { botToken: string; setBotToken: (v: string) => void }) {
   const { t } = useI18n();
   const [botUsername, setBotUsername] = useState<string | null>(null);
   const [users, setUsers] = useState<TelegramUser[]>([]);
@@ -128,6 +128,24 @@ function TelegramTab({ botToken, setBotToken }: { botToken: string; setBotToken:
             ))}
           </div>
         )}
+      </div>
+
+      {/* Coming soon channels */}
+      <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { name: 'WhatsApp', icon: '💬', color: 'rgb(37 211 102 / 0.15)' },
+          { name: 'Discord', icon: '🎮', color: 'rgb(88 101 242 / 0.15)' },
+          { name: 'Slack', icon: '💼', color: 'rgb(74 21 75 / 0.25)' },
+          { name: 'Email', icon: '✉️', color: 'rgb(189 241 70 / 0.1)' },
+        ].map((ch) => (
+          <div key={ch.name} className="rounded-xl border border-(--border) bg-(--surface) p-3 flex items-center gap-2.5 opacity-50">
+            <div className="size-8 rounded-lg flex items-center justify-center text-sm" style={{ background: ch.color }}>{ch.icon}</div>
+            <div>
+              <p className="text-xs font-medium text-(--foreground)">{ch.name}</p>
+              <p className="text-[10px] text-(--muted)">{t('settings.comingSoon')}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
