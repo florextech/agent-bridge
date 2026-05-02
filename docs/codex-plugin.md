@@ -7,7 +7,9 @@ This guide explains how to install and use the local `agent-bridge` plugin with 
 From repo root:
 
 ```bash
-python3 /Users/cristiandavidflorez/.codex/skills/.system/plugin-creator/scripts/create_basic_plugin.py agent-bridge \
+# Option A: if plugin-creator skill is already available in your Codex session, use it directly.
+# Option B: run the scaffold script from your Codex home (replace <codex-home>).
+python3 <codex-home>/skills/.system/plugin-creator/scripts/create_basic_plugin.py agent-bridge \
   --path ./plugins \
   --marketplace-path ./.agents/plugins/marketplace.json \
   --with-marketplace --with-scripts --with-assets
