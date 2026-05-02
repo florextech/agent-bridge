@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { use } from 'react';
-import { Badge, DataList, DataListItem, EmptyState, Heading, Spinner, Status, Text, Timeline, TimelineItem } from '@florexlabs/ui';
-import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText, Copy, Check, User, Robot } from '@phosphor-icons/react';
+import { Badge, DataList, DataListItem, EmptyState, Heading, Spinner, Status, Tabs, TabsList, TabsTrigger, TabsContent, Text, Timeline, TimelineItem } from '@florexlabs/ui';
+import { ArrowLeft, Rocket, CheckCircle, Eye, ShieldCheck, XCircle, TestTube, ChatText, Copy, Check, User, Robot, ClockCounterClockwise, Code, Info } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import type { AgentEvent, ChannelResponse, Session } from '@agent-bridge/core';
 import { bridgeApi } from '@/lib/api';
@@ -26,6 +26,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [responses, setResponses] = useState<ChannelResponse[]>([]);
   const [error, setError] = useState('');
+  const [copiedKey, setCopiedKey] = useState('');
 
   useEffect(() => {
     Promise.all([bridgeApi.getSession(id), bridgeApi.getEvents(id), bridgeApi.getResponses(id)])
@@ -33,11 +34,53 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
+  const copy = (key: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(''), 2000);
+  };
+
   if (error) return <Text variant="danger">{error}</Text>;
   if (!session) return <div className="flex items-center justify-center h-32"><Spinner className="size-5" /></div>;
 
+  const apiUrl = typeof window !== 'undefined'
+    ? window.location.origin.replace(':3000', ':3001')
+    : 'http://localhost:3001';
+
+  const agentPrompt = `You have access to Agent Bridge for notifications.
+Session ID: ${session.id}
+API: ${apiUrl}
+
+When you complete a task, need review, need approval, hit an error, or finish tests, notify me:
+
+curl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"TYPE","payload":{"summary":"DESCRIPTION"}}'
+
+Event types: task_started, task_completed, needs_review, needs_approval, error, test_results, message
+
+To check if I responded: curl ${apiUrl}/agent-sessions/${session.id}/responses
+After reading: curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read`;
+
+  const mcpConfig = JSON.stringify({
+    mcpServers: {
+      'agent-bridge': {
+        command: 'node',
+        args: ['/path/to/agent-bridge/packages/mcp/index.js'],
+        env: {
+          AGENT_BRIDGE_API: apiUrl,
+          AGENT_BRIDGE_SESSION: session.id,
+        },
+      },
+    },
+  }, null, 2);
+
+  const CopyBtn = ({ k, text }: { k: string; text: string }) => (
+    <button onClick={() => copy(k, text)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
+      {copiedKey === k ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
+    </button>
+  );
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <div>
         <a href="/" className="inline-flex items-center gap-1.5 text-(--muted) text-sm hover:text-(--foreground) transition-colors mb-2">
           <ArrowLeft size={14} /> {t('session.backToSessions')}
@@ -46,109 +89,93 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         <Text variant="muted" size="sm">Agent: {session.agentName}</Text>
       </div>
 
-      <div className="flx-card">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('session.sessionInfo')}</p>
-        <DataList>
-          <DataListItem label="Channel"><span className="flx-pill">{session.channelType}</span></DataListItem>
-          <DataListItem label="Status"><Status value={session.status === 'active' ? 'success' : 'neutral'}>{session.status}</Status></DataListItem>
-          <DataListItem label={t('session.created')}>{new Date(session.createdAt).toLocaleString()}</DataListItem>
-          <DataListItem label={t('session.updated')}>{new Date(session.updatedAt).toLocaleString()}</DataListItem>
-        </DataList>
-      </div>
+      <Tabs defaultValue="timeline">
+        <TabsList>
+          <TabsTrigger value="timeline"><span className="inline-flex items-center gap-1.5"><ClockCounterClockwise size={15} weight="duotone" /> {t('session.timeline')}</span></TabsTrigger>
+          <TabsTrigger value="instructions"><span className="inline-flex items-center gap-1.5"><Code size={15} weight="duotone" /> Instructions</span></TabsTrigger>
+          <TabsTrigger value="info"><span className="inline-flex items-center gap-1.5"><Info size={15} weight="duotone" /> Info</span></TabsTrigger>
+        </TabsList>
 
-      <IntegrationBlock sessionId={session.id} />
-
-      <div className="flx-card">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('session.timeline')}</p>
-        {events.length === 0 && responses.length === 0 ? (
-          <EmptyState title={t('session.noActivity')} description={t('session.noActivityDesc')} />
-        ) : (
-          <div className="max-h-[500px] overflow-y-auto pr-1">
-            <Timeline>
-              {[
-                ...events.map((ev) => ({ kind: 'event' as const, id: ev.id, date: ev.createdAt, ev })),
-                ...responses.map((r) => ({ kind: 'response' as const, id: r.id, date: r.createdAt, r })),
-              ]
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                .map((item) =>
-                  item.kind === 'event' ? (
-                    <TimelineItem key={item.id} title={item.ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[item.ev.type] || <ChatText size={16} weight="duotone" />}>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="size-5 rounded-full bg-(--surface-muted) flex items-center justify-center"><Robot size={11} className="text-(--muted)" /></div>
-                          <Badge tone="neutral">{item.ev.deliveryStatus}</Badge>
-                        </div>
-                        {typeof item.ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{item.ev.payload['summary']}</Text>}
-                        <Text variant="muted" size="xs">{new Date(item.ev.createdAt).toLocaleString()}</Text>
-                      </div>
-                    </TimelineItem>
-                  ) : (
-                    <TimelineItem key={item.id} title={item.r.author || t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="size-5 rounded-full bg-[rgb(189_241_70/0.15)] flex items-center justify-center"><User size={11} className="text-(--brand-600)" /></div>
-                          <Text variant="muted" size="xs">{item.r.author || t('session.userResponse')}</Text>
-                          {!item.r.read && <Badge tone="warning">{t('session.unread')}</Badge>}
-                        </div>
-                        <Text size="sm">{item.r.content}</Text>
-                        <Text variant="muted" size="xs">{new Date(item.r.createdAt).toLocaleString()}</Text>
-                      </div>
-                    </TimelineItem>
-                  ),
-                )}
-            </Timeline>
+        <TabsContent value="timeline">
+          <div className="flx-card">
+            {events.length === 0 && responses.length === 0 ? (
+              <EmptyState title={t('session.noActivity')} description={t('session.noActivityDesc')} />
+            ) : (
+              <div className="max-h-[500px] overflow-y-auto pr-1">
+                <Timeline>
+                  {[
+                    ...events.map((ev) => ({ kind: 'event' as const, id: ev.id, date: ev.createdAt, ev })),
+                    ...responses.map((r) => ({ kind: 'response' as const, id: r.id, date: r.createdAt, r })),
+                  ]
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map((item) =>
+                      item.kind === 'event' ? (
+                        <TimelineItem key={item.id} title={item.ev.type.replace(/_/g, ' ')} icon={EVENT_ICONS[item.ev.type] || <ChatText size={16} weight="duotone" />}>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <div className="size-5 rounded-full bg-(--surface-muted) flex items-center justify-center"><Robot size={11} className="text-(--muted)" /></div>
+                              <Badge tone="neutral">{item.ev.deliveryStatus}</Badge>
+                            </div>
+                            {typeof item.ev.payload['summary'] === 'string' && <Text variant="muted" size="sm">{item.ev.payload['summary']}</Text>}
+                            <Text variant="muted" size="xs">{new Date(item.ev.createdAt).toLocaleString()}</Text>
+                          </div>
+                        </TimelineItem>
+                      ) : (
+                        <TimelineItem key={item.id} title={item.r.author || t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <div className="size-5 rounded-full bg-[rgb(189_241_70/0.15)] flex items-center justify-center"><User size={11} className="text-(--brand-600)" /></div>
+                              <Text variant="muted" size="xs">{item.r.author || t('session.userResponse')}</Text>
+                              {!item.r.read && <Badge tone="warning">{t('session.unread')}</Badge>}
+                            </div>
+                            <Text size="sm">{item.r.content}</Text>
+                            <Text variant="muted" size="xs">{new Date(item.r.createdAt).toLocaleString()}</Text>
+                          </div>
+                        </TimelineItem>
+                      ),
+                    )}
+                </Timeline>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        </TabsContent>
 
-function IntegrationBlock({ sessionId }: { sessionId: string }) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [copiedKey, setCopiedKey] = useState('');
-
-  const copy = (key: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(''), 2000);
-  };
-
-  const apiUrl = typeof window !== 'undefined'
-    ? window.location.origin.replace(':3000', ':3001')
-    : 'http://localhost:3001';
-
-  const agentPrompt = `You have access to Agent Bridge for notifications.
-Session ID: ${sessionId}
-API: ${apiUrl}
-
-When you complete a task, need review, need approval, hit an error, or finish tests, notify me:
-
-curl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${sessionId}","type":"TYPE","payload":{"summary":"DESCRIPTION"}}'
-
-Event types: task_started, task_completed, needs_review, needs_approval, error, test_results, message
-
-To check if I responded: curl ${apiUrl}/agent-sessions/${sessionId}/responses
-After reading: curl -X POST ${apiUrl}/agent-sessions/${sessionId}/mark-read`;
-
-  return (
-    <div className="flx-card">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between">
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">{t('session.agentInstructions')}</p>
-        <span className="text-(--muted) text-xs">{open ? `▲ ${t('session.hide')}` : `▼ ${t('session.show')}`}</span>
-      </button>
-      {open && (
-        <div className="mt-4 flex flex-col gap-3">
-          <Text variant="muted" size="xs">{t('session.instructionsDesc')}</Text>
-          <div className="relative">
-            <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{agentPrompt}</pre>
-            <button onClick={() => copy('prompt', agentPrompt)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
-              {copiedKey === 'prompt' ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
-            </button>
+        <TabsContent value="instructions">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flx-card flex flex-col gap-3">
+              <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">{t('session.agentInstructions')}</p>
+              <Text variant="muted" size="xs">{t('session.instructionsDesc')}</Text>
+              <div className="relative">
+                <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{agentPrompt}</pre>
+                <CopyBtn k="prompt" text={agentPrompt} />
+              </div>
+            </div>
+            <div className="flx-card flex flex-col gap-3">
+              <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600)">MCP Configuration</p>
+              <Text variant="muted" size="xs">Add this to your MCP client (e.g. Kiro) configuration:</Text>
+              <div className="relative">
+                <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{mcpConfig}</pre>
+                <CopyBtn k="mcp" text={mcpConfig} />
+              </div>
+              <div className="p-3 rounded-lg bg-(--surface-muted) border border-(--border)">
+                <Text variant="muted" size="xs">Available MCP tools: <code className="text-(--foreground)">notify</code>, <code className="text-(--foreground)">check_responses</code>, <code className="text-(--foreground)">mark_read</code>, <code className="text-(--foreground)">list_sessions</code></Text>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        </TabsContent>
+
+        <TabsContent value="info">
+          <div className="flx-card">
+            <p className="uppercase tracking-[0.18em] text-xs font-semibold text-(--brand-600) mb-4">{t('session.sessionInfo')}</p>
+            <DataList>
+              <DataListItem label="Channel"><span className="flx-pill">{session.channelType}</span></DataListItem>
+              <DataListItem label="Status"><Status value={session.status === 'active' ? 'success' : 'neutral'}>{session.status}</Status></DataListItem>
+              <DataListItem label={t('session.created')}>{new Date(session.createdAt).toLocaleString()}</DataListItem>
+              <DataListItem label={t('session.updated')}>{new Date(session.updatedAt).toLocaleString()}</DataListItem>
+            </DataList>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

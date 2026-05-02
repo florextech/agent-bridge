@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
-import { Shield } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
@@ -16,7 +15,7 @@ export default function SetupPage() {
 
   useEffect(() => {
     bridgeApi.getUserCount().then((r) => {
-      if (r.count > 0) window.location.href = '/login';
+      if (r.count > 0) globalThis.location.href = '/login';
       else setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -31,7 +30,7 @@ export default function SetupPage() {
       await bridgeApi.setupAdmin(form);
       const res = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
       if (res?.error) setError('Account created but login failed. Go to /login.');
-      else window.location.href = '/';
+      else globalThis.location.href = '/';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Setup failed');
     }
@@ -40,7 +39,7 @@ export default function SetupPage() {
   if (loading) return null;
 
   return (
-    <><div className="flx-card w-full max-w-sm">
+    <div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
         <Logo size="sm" />
         <Heading as="h1" size="md">{t('auth.setupAdmin')}</Heading>
@@ -62,6 +61,6 @@ export default function SetupPage() {
         {error && <Alert variant="danger">{error}</Alert>}
         <Button type="submit">{t('auth.createAdmin')}</Button>
       </form>
-    </div></>
+    </div>
   );
 }

@@ -19,7 +19,7 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (needsSetup) window.location.href = '/setup';
+    if (needsSetup) globalThis.location.href = '/setup';
   }, [needsSetup]);
 
   const handleSubmit = async (e: React.FormEvent) => {
