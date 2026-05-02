@@ -158,8 +158,9 @@ export class TelegramController implements OnModuleInit {
       return;
     }
 
-    await this.sessions.addResponse(session.id, eventId, msg.text, firstName || username || chatId);
-    this.logger.log(`Response saved from ${firstName || chatId}: "${msg.text}" → session ${session.id}`);
+    await this.sessions.addResponse(session.id, eventId, msg.text, firstName ?? username ?? chatId);
+    this.logger.log(`Response saved from ${firstName ?? chatId}: "${msg.text}" → session ${session.id}`);
+    this.sendReply(chatId, `✓ _Recibido_`);
   }
 
   private sendReply(chatId: string, text: string): void {
