@@ -55,6 +55,10 @@ export function createMockPrisma() {
       findUnique: vi.fn(),
       delete: vi.fn(),
     },
+    appSetting: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn(),
+    },
   };
 }
 
