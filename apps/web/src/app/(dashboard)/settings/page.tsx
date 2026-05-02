@@ -127,11 +127,18 @@ function ConnectionsTab({ botToken, setBotToken, botUsername, setBotUsername }: 
                   <p className="text-[10px] text-(--muted)">{u.username ? `@${u.username}` : `ID: ${u.chatId}`}</p>
                 </div>
                 <Badge tone={u.authorized ? 'success' : 'warning'}>{u.authorized ? t('settings.active') : t('settings.pending')}</Badge>
-                <button onClick={() => toggleAuth(u.chatId)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--foreground) transition-colors">
-                  <UserCheck size={14} weight={u.authorized ? 'fill' : 'regular'} />
-                </button>
-                <button onClick={() => removeUser(u.chatId)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--danger) transition-colors">
-                  <UserMinus size={14} />
+                {!u.authorized && (
+                  <button onClick={() => toggleAuth(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(189_241_70/0.1)] text-(--muted) hover:text-(--brand-600) transition-colors" title="Approve">
+                    <UserCheck size={14} />
+                  </button>
+                )}
+                {u.authorized && (
+                  <button onClick={() => toggleAuth(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(245_158_11/0.1)] text-(--muted) hover:text-(--warning) transition-colors" title="Revoke">
+                    <UserMinus size={14} />
+                  </button>
+                )}
+                <button onClick={() => removeUser(u.chatId)} className="p-1.5 rounded hover:bg-[rgb(239_68_68/0.1)] text-(--muted) hover:text-(--danger) transition-colors" title="Remove">
+                  <Trash size={14} />
                 </button>
               </div>
             ))}
