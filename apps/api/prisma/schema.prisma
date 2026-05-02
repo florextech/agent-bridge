@@ -42,6 +42,7 @@ model ChannelResponse {
   sessionId String   @map("session_id")
   eventId   String   @map("event_id")
   content   String
+  author    String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 

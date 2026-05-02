@@ -83,10 +83,11 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     </TimelineItem>
                   ) : (
-                    <TimelineItem key={item.id} title={t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
+                    <TimelineItem key={item.id} title={item.r.author || t('session.userResponse')} icon={<ChatText size={16} weight="duotone" className="text-(--brand-600)" />}>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <div className="size-5 rounded-full bg-[rgb(189_241_70/0.15)] flex items-center justify-center"><User size={11} className="text-(--brand-600)" /></div>
+                          <Text variant="muted" size="xs">{item.r.author || t('session.userResponse')}</Text>
                           {!item.r.read && <Badge tone="warning">{t('session.unread')}</Badge>}
                         </div>
                         <Text size="sm">{item.r.content}</Text>

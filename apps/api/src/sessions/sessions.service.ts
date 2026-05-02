@@ -44,8 +44,8 @@ export class SessionsService {
     return rows.map(toResponse);
   }
 
-  async addResponse(sessionId: string, eventId: string, content: string): Promise<ChannelResponse> {
-    const row = await this.prisma.channelResponse.create({ data: { sessionId, eventId, content } });
+  async addResponse(sessionId: string, eventId: string, content: string, author?: string): Promise<ChannelResponse> {
+    const row = await this.prisma.channelResponse.create({ data: { sessionId, eventId, content, author } });
     await this.prisma.session.update({ where: { id: sessionId }, data: { updatedAt: new Date() } });
     return toResponse(row);
   }
@@ -72,12 +72,13 @@ function toSession(row: { id: string; projectName: string; agentName: string; st
   };
 }
 
-function toResponse(row: { id: string; sessionId: string; eventId: string; content: string; read: boolean; createdAt: Date }): ChannelResponse {
+function toResponse(row: { id: string; sessionId: string; eventId: string; content: string; author: string | null; read: boolean; createdAt: Date }): ChannelResponse {
   return {
     id: row.id,
     sessionId: row.sessionId,
     eventId: row.eventId,
     content: row.content,
+    author: row.author || undefined,
     read: row.read,
     createdAt: row.createdAt.toISOString(),
   };

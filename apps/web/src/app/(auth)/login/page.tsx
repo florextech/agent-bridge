@@ -33,7 +33,7 @@ export default function LoginPage() {
   };
 
   return (
-    <><div className="flx-card w-full max-w-sm">
+    <div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
         <Logo size="sm" />
         <Heading as="h1" size="md">{t('common.appName')}</Heading>
@@ -51,6 +51,6 @@ export default function LoginPage() {
         {error && <Alert variant="danger">{error}</Alert>}
         <Button type="submit">{t('auth.signIn')}</Button>
       </form>
-    </div></>
+    </div>
   );
 }

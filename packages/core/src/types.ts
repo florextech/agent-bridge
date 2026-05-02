@@ -27,6 +27,7 @@ export interface ChannelResponse {
   sessionId: string;
   eventId: string;
   content: string;
+  author?: string;
   read: boolean;
   createdAt: string;
 }

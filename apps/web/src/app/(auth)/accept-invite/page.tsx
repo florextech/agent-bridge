@@ -35,22 +35,22 @@ function AcceptInviteForm() {
 
   if (!token) {
     return (
-      <><div className="flx-card w-full max-w-sm">
+      <div className="flx-card w-full max-w-sm">
         <Alert variant="danger">Missing invitation token.</Alert>
-      </div></>
+      </div>
     );
   }
 
   if (success) {
     return (
-      <><div className="flx-card w-full max-w-sm">
+      <div className="flx-card w-full max-w-sm">
         <Alert variant="success">Account created! Redirecting...</Alert>
-      </div></>
+      </div>
     );
   }
 
   return (
-    <><div className="flx-card w-full max-w-sm">
+    <div className="flx-card w-full max-w-sm">
       <div className="flex items-center gap-2.5 mb-6">
         <Logo size="sm" />
         <Heading as="h1" size="md">{t('auth.acceptInvite')}</Heading>
@@ -68,7 +68,7 @@ function AcceptInviteForm() {
         {error && <Alert variant="danger">{error}</Alert>}
         <Button type="submit">{t('auth.accept')}</Button>
       </form>
-    </div></>
+    </div>
   );
 }
 
