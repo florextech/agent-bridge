@@ -16,7 +16,7 @@ const EVENT_ICONS: Record<string, ReactNode> = {
   message: <ChatText size={16} weight="duotone" className="text-(--muted)" />,
 };
 
-export function TimelineTab({ sessionId }: { sessionId: string }) {
+export function TimelineTab({ sessionId }: Readonly<{ sessionId: string }>) {
   const { t } = useI18n();
   const { data: events = [] } = useEvents(sessionId);
   const { data: responses = [] } = useResponses(sessionId);

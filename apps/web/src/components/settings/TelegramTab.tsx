@@ -23,7 +23,7 @@ function telegramReducer(state: TelegramState, action: TelegramAction): Telegram
   }
 }
 
-export function TelegramTab({ botToken, onBotTokenChange }: { botToken: string; onBotTokenChange: (v: string) => void }) {
+export function TelegramTab({ botToken, onBotTokenChange }: Readonly<{ botToken: string; onBotTokenChange: (v: string) => void }>) {
   const { t } = useI18n();
   const [state, dispatch] = useReducer(telegramReducer, { result: null, copied: false });
   const { data: telegramStatus } = useTelegramStatus();

@@ -4,7 +4,6 @@ import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Alert, Button, Heading, Input, Label, Text } from '@florexlabs/ui';
-import { UserPlus } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import { Logo } from '@/components/Logo';
 import { bridgeApi } from '@/lib/api';
@@ -27,7 +26,7 @@ function AcceptInviteForm() {
       const user = await bridgeApi.acceptInvite({ token, name: form.name, password: form.password });
       setSuccess(true);
       const res = await signIn('credentials', { email: user.email, password: form.password, redirect: false });
-      if (!res?.error) window.location.href = '/';
+      if (!res?.error) globalThis.location.href = '/';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept invitation');
     }

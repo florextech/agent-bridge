@@ -23,7 +23,14 @@ export default function TerminalPage() {
   };
 
   const closeTab = (id: string) => {
-    setTabs((p) => { const n = p.filter((t) => t.id !== id); if (!n.length) return p; if (activeTab === id) setActiveTab(n[n.length - 1]!.id); return n; });
+    setTabs((p) => {
+      const n = p.filter((t) => t.id !== id);
+      if (!n.length) return p;
+      if (activeTab === id) {
+        setActiveTab(n.at(-1).id);
+      }
+      return n;
+    });
   };
 
   if (!tabs.length) return null;
@@ -54,12 +61,12 @@ export default function TerminalPage() {
               <Terminal size={12} weight="bold" className={activeTab === tab.id ? 'text-(--brand-600)' : ''} />
               {tab.label}
               {tabs.length > 1 && (
-                <span
+                <button
                   onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
                   className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[rgb(239_68_68/0.15)] text-(--muted) hover:text-(--danger) transition-all"
                 >
                   <X size={10} />
-                </span>
+                </button>
               )}
             </button>
           ))}
@@ -129,7 +136,7 @@ function TerminalPanel() {
       };
 
       ws.onmessage = (e) => {
-        const msg = JSON.parse(e.data as string) as { type: string; data?: string; code?: number };
+        const msg = JSON.parse(e.data) as { type: string; data?: string; code?: number };
         if (msg.type === 'output' && msg.data) term.write(msg.data);
         else if (msg.type === 'exit') term.write(`\r\n\x1b[90m● exit ${msg.code}\x1b[0m\r\n`);
       };

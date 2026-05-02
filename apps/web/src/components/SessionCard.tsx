@@ -26,6 +26,7 @@ export function SessionCard({ session: s, onDelete }: Readonly<{ session: Sessio
         </div>
       </div>
       <button
+        title='delete'
         onClick={(e) => { e.preventDefault(); onDelete(s.id); }}
         className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgb(239_68_68/0.1)] transition-all text-(--muted) hover:text-(--danger)"
       >

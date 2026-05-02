@@ -24,7 +24,7 @@ export default function LoginPage() {
     if (res?.error) {
       setError(t('auth.invalidCredentials'));
     } else {
-      window.location.href = '/';
+      globalThis.location.href = '/';
     }
   };
 
