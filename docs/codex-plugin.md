@@ -102,6 +102,33 @@ Telegram polling mode:
 
 Polling stops when a message contains `done` or `back to terminal`.
 
+Telegram polling + execution mode:
+
+```bash
+~/plugins/agent-bridge/scripts/agent_setup.sh poll-telegram-exec <session_id>
+```
+
+Supported message patterns in execution mode:
+
+- Natural language instruction: forwarded to Codex CLI execution.
+- `sh: <command>` or `cmd: <command>`: runs shell command.
+- `mode: telegram|terminal|hybrid`: changes runtime mode.
+
+Environment variables (optional):
+
+- `AGENT_BRIDGE_EXEC_TIMEOUT` (default: `180`) for shell execution timeout.
+- `AGENT_BRIDGE_STATE_DIR` (default: `~/.agent-bridge`) for mode persistence.
+- `AGENT_BRIDGE_WORKDIR` (default: current directory) as execution working directory.
+
+Requirements:
+
+- `curl` (all commands)
+- `jq` (polling commands)
+
+Security note:
+
+`poll-telegram-exec` runs instructions received via Telegram. Use only with trusted users/chats.
+
 ## 5. Troubleshooting
 
 - Install button does nothing:
@@ -109,6 +136,6 @@ Polling stops when a message contains `done` or `back to terminal`.
   - Verify plugin path is exactly `~/plugins/agent-bridge`.
   - Restart Codex Desktop.
 - No icon:
-  - Ensure these files exist:
+  - Ensure these files exist if you want custom branding:
     - `~/plugins/agent-bridge/assets/icon.png`
     - `~/plugins/agent-bridge/assets/logo.png`
