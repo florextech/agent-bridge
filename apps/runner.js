@@ -1,21 +1,37 @@
 #!/usr/bin/env node
 
 /**
- * Agent Bridge Runner — autonomous polling script
+ * Agent Bridge Runner — command dispatcher
  *
- * Polls for Telegram responses and can re-invoke an agent command when
- * the user responds. Useful when agent sessions (like Kiro) expire.
+ * Polls for Telegram responses and executes commands based on message content.
+ * Configure commands in a JSON file or pass inline.
  *
  * Usage:
- *   node runner.js --session <ID> [--api http://localhost:3001] [--interval 5] [--command "kiro chat"]
+ *   node apps/runner.js --session <ID> --config commands.json
+ *   node apps/runner.js --session <ID> --command "echo"
  *
- * Options:
- *   --session   Session ID to poll (required)
- *   --api       API base URL (default: http://localhost:3001)
- *   --interval  Polling interval in seconds (default: 5)
- *   --command   Command to run when a response is received (optional)
- *   --once      Poll once and exit (for cron usage)
+ * Commands config (commands.json):
+ * {
+ *   "commands": {
+ *     "kiro": "kiro chat --message",
+ *     "codex": "codex --prompt",
+ *     "test": "pnpm test",
+ *     "build": "pnpm -r build",
+ *     "deploy": "docker compose up -d"
+ *   },
+ *   "default": "echo"
+ * }
+ *
+ * From Telegram, send:
+ *   /kiro refactoriza el módulo de auth
+ *   /test
+ *   /build
+ *   /deploy
+ *   hola (uses default command)
  */
+
+const fs = require('node:fs');
+const { execSync } = require('node:child_process');
 
 const args = process.argv.slice(2);
 
@@ -27,15 +43,73 @@ function getArg(name) {
 const sessionId = getArg('session');
 const apiUrl = getArg('api') || 'http://localhost:3001';
 const interval = Number.parseInt(getArg('interval') || '5', 10) * 1000;
-const command = getArg('command');
+const defaultCommand = getArg('command');
+const configPath = getArg('config');
 const once = args.includes('--once');
 
 if (!sessionId) {
-  console.error('Usage: node runner.js --session <SESSION_ID> [--api URL] [--interval 5] [--command "cmd"]');
+  console.error(`Usage:
+  node apps/runner.js --session <ID>
+  node apps/runner.js --session <ID> --command "echo"
+  node apps/runner.js --session <ID> --config commands.json
+
+Commands config example (commands.json):
+{
+  "commands": {
+    "kiro": "kiro chat --message",
+    "codex": "codex --prompt",
+    "test": "pnpm test",
+    "build": "pnpm -r build"
+  },
+  "default": "echo"
+}`);
   process.exit(1);
 }
 
+// Load commands config
+let commands = {};
+let fallbackCommand = defaultCommand || null;
+
+if (configPath) {
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    commands = config.commands || {};
+    fallbackCommand = config.default || fallbackCommand;
+  } catch (e) {
+    console.error(`Failed to load config: ${e.message}`);
+    process.exit(1);
+  }
+}
+
 const log = (msg) => console.log(`[${new Date().toLocaleTimeString()}] ${msg}`);
+
+function parseMessage(text) {
+  const trimmed = text.trim();
+  if (trimmed.startsWith('/')) {
+    const spaceIdx = trimmed.indexOf(' ');
+    if (spaceIdx === -1) {
+      return { cmd: trimmed.slice(1), args: '' };
+    }
+    return { cmd: trimmed.slice(1, spaceIdx), args: trimmed.slice(spaceIdx + 1).trim() };
+  }
+  return { cmd: null, args: trimmed };
+}
+
+function executeCommand(cmd, cmdArgs) {
+  const template = commands[cmd];
+  if (template) {
+    const fullCommand = cmdArgs ? `${template} "${cmdArgs}"` : template;
+    log(`🔄 /${cmd}: ${fullCommand}`);
+    try {
+      execSync(fullCommand, { stdio: 'inherit', timeout: 300000 });
+      log(`✅ /${cmd} completed`);
+    } catch (e) {
+      log(`⚠️ /${cmd} failed: ${e.status || e.message}`);
+    }
+    return true;
+  }
+  return false;
+}
 
 async function poll() {
   try {
@@ -44,26 +118,30 @@ async function poll() {
 
     const responses = await res.json();
     const unread = responses.filter((r) => !r.read);
-
     if (unread.length === 0) return;
 
-    log(`📨 ${unread.length} new response(s):`);
+    // Mark as read first
+    await fetch(`${apiUrl}/agent-sessions/${sessionId}/mark-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
     for (const r of unread) {
-      log(`  → ${r.content}`);
-    }
+      const { cmd, args: cmdArgs } = parseMessage(r.content);
 
-    // Mark as read
-    await fetch(`${apiUrl}/agent-sessions/${sessionId}/mark-read`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-
-    // Re-invoke agent if command is set
-    if (command) {
-      const fullCommand = `${command} "${unread.map((r) => r.content).join(' | ')}"`;
-      log(`🔄 Running: ${fullCommand}`);
-      const { execSync } = require('node:child_process');
-      try {
-        execSync(fullCommand, { stdio: 'inherit', timeout: 300000 });
-      } catch (e) {
-        log(`⚠️ Command exited with error: ${e.status || e.message}`);
+      if (cmd && commands[cmd]) {
+        executeCommand(cmd, cmdArgs);
+      } else if (fallbackCommand) {
+        const fullCommand = `${fallbackCommand} "${r.content}"`;
+        log(`🔄 ${fullCommand}`);
+        try {
+          execSync(fullCommand, { stdio: 'inherit', timeout: 300000 });
+        } catch (e) {
+          log(`⚠️ Command failed: ${e.status || e.message}`);
+        }
+      } else {
+        log(`📨 ${r.content}`);
+        if (cmd) log(`   ⚠️ Unknown command: /${cmd}`);
       }
     }
   } catch (e) {
@@ -71,11 +149,14 @@ async function poll() {
   }
 }
 
-log(`🚀 Agent Bridge Runner started`);
+log('🚀 Agent Bridge Runner started');
 log(`   Session: ${sessionId}`);
 log(`   API: ${apiUrl}`);
 log(`   Interval: ${interval / 1000}s`);
-if (command) log(`   Command: ${command}`);
+if (Object.keys(commands).length > 0) {
+  log(`   Commands: ${Object.keys(commands).map(c => '/' + c).join(', ')}`);
+}
+if (fallbackCommand) log(`   Default: ${fallbackCommand}`);
 log('');
 
 if (once) {
