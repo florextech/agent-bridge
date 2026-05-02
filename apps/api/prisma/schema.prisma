@@ -83,3 +83,10 @@ model Invitation {
 
   @@map("invitations")
 }
+
+model AppSetting {
+  key   String @id
+  value String
+
+  @@map("app_settings")
+}
