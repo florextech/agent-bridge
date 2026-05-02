@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
         <span className="font-display text-sm font-bold text-(--foreground)">Agent Bridge</span>
       </div>
 
-      {open && <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }} role="button" tabIndex={0} aria-label={t('common.closeMenu')} />}
+      {open && <button className="md:hidden fixed inset-0 z-40 bg-black/50 cursor-default" onClick={() => setOpen(false)} aria-label={t('common.closeMenu')} />}
 
       <nav className={`fixed md:sticky top-0 z-40 h-screen w-[220px] shrink-0 border-r border-(--border) bg-(--surface) flex flex-col transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="hidden md:block px-5 pt-5 pb-4">
