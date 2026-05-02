@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import { Heading, Spinner, Tabs, TabsList, TabsTrigger, TabsContent, Text } from '@florexlabs/ui';
-import { ArrowLeft, ClockCounterClockwise, Code, Info } from '@phosphor-icons/react';
+import { ArrowLeft, ClockCounterClockwise, Code, Info, Robot } from '@phosphor-icons/react';
 import { useI18n } from '@/lib/i18n';
 import { useSession } from '@/lib/queries';
 import { TimelineTab } from '@/components/session/TimelineTab';
@@ -20,11 +20,21 @@ export default function SessionDetailPage({ params }: Readonly<{ params: Promise
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <a href="/" className="inline-flex items-center gap-1.5 text-(--muted) text-sm hover:text-(--foreground) transition-colors mb-2">
-          <ArrowLeft size={14} /> {t('session.backToSessions')}
+        <a href="/" className="inline-flex items-center gap-1.5 text-(--muted) text-xs hover:text-(--foreground) transition-colors mb-4">
+          <ArrowLeft size={12} /> {t('session.backToSessions')}
         </a>
-        <Heading as="h2" size="lg">{session.projectName}</Heading>
-        <Text variant="muted" size="sm">{t('session.agentPrefix')}: {session.agentName}</Text>
+        <div className="flex items-center gap-3">
+          <div className="size-11 rounded-xl bg-(--surface-muted) flex items-center justify-center shrink-0">
+            <Robot size={22} weight="duotone" className="text-(--brand-600)" />
+          </div>
+          <div>
+            <Heading as="h2" size="lg">{session.projectName}</Heading>
+            <div className="flex items-center gap-2 text-xs text-(--muted)">
+              <span className="flx-pill text-[10px] py-0">{session.channelType}</span>
+              <span>{session.agentName}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="timeline">
