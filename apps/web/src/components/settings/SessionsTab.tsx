@@ -30,7 +30,7 @@ function sessionsReducer(state: SessionsState, action: SessionsAction): Sessions
   }
 }
 
-export function SessionsTab({ botToken }: { botToken: string }) {
+export function SessionsTab({ botToken }: Readonly<{ botToken: string }>) {
   const { t } = useI18n();
   const [state, dispatch] = useReducer(sessionsReducer, { projectName: '', agentName: '', session: null, copiedKey: '' });
   const createMutation = useCreateSession();
@@ -48,7 +48,7 @@ export function SessionsTab({ botToken }: { botToken: string }) {
     );
   };
 
-  const apiUrl = typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : 'http://localhost:3001';
+  const apiUrl = globalThis.window === undefined ? 'http://localhost:3001' : globalThis.location.origin.replace(':3000', ':3001');
 
   const agentPrompt = state.session ? `You have access to Agent Bridge, a notification system that lets you communicate with the user via Telegram and other channels.\n\n## Configuration\n- API: ${apiUrl}\n- Session: ${state.session.id}\n\n## How to notify\ncurl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${state.session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'\n\n## Event types\n- task_started — When you begin working\n- task_completed — When you finish a task\n- needs_review — When code needs review\n- needs_approval — When you need permission\n- error — When you encounter an error\n- test_results — When tests finish\n- message — General messages\n\n## Check responses\ncurl ${apiUrl}/agent-sessions/${state.session.id}/responses\ncurl -X POST ${apiUrl}/agent-sessions/${state.session.id}/mark-read` : '';
 

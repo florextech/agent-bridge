@@ -76,12 +76,6 @@ curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
     },
   }, null, 2);
 
-  const CopyBtn = ({ k, text }: { k: string; text: string }) => (
-    <button onClick={() => copy(k, text)} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
-      {copiedKey === k ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
-    </button>
-  );
-
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="flx-card flex flex-col gap-3">
@@ -89,7 +83,7 @@ curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
         <Text variant="muted" size="xs">{t('session.instructionsDesc')}</Text>
         <div className="relative">
           <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{agentPrompt}</pre>
-          <CopyBtn k="prompt" text={agentPrompt} />
+          <InlineCopyBtn active={copiedKey === 'prompt'} onClick={() => copy('prompt', agentPrompt)} />
         </div>
       </div>
       <div className="flx-card flex flex-col gap-3">
@@ -97,12 +91,20 @@ curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
         <Text variant="muted" size="xs">Add this to your MCP client (e.g. Kiro) configuration:</Text>
         <div className="relative">
           <pre className="p-4 rounded-xl bg-(--surface-muted) border border-(--border) text-xs overflow-x-auto whitespace-pre-wrap text-(--foreground)">{mcpConfig}</pre>
-          <CopyBtn k="mcp" text={mcpConfig} />
+          <InlineCopyBtn active={copiedKey === 'mcp'} onClick={() => copy('mcp', mcpConfig)} />
         </div>
         <div className="p-3 rounded-lg bg-(--surface-muted) border border-(--border)">
           <Text variant="muted" size="xs">Available MCP tools: <code className="text-(--foreground)">notify</code>, <code className="text-(--foreground)">check_responses</code>, <code className="text-(--foreground)">mark_read</code>, <code className="text-(--foreground)">list_sessions</code></Text>
         </div>
       </div>
     </div>
+  );
+}
+
+function InlineCopyBtn({ active, onClick }: Readonly<{ active: boolean; onClick: () => void }>) {
+  return (
+    <button onClick={onClick} className="absolute top-2 right-2 p-2 rounded-lg bg-(--surface) border border-(--border) text-(--muted) hover:text-(--foreground) transition-colors">
+      {active ? <Check size={14} className="text-(--brand-600)" /> : <Copy size={14} />}
+    </button>
   );
 }

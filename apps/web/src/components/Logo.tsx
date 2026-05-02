@@ -1,6 +1,6 @@
 import { ChatCircleDots, Lightning } from '@phosphor-icons/react';
 
-export function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+export function Logo({ size = 'md' }: Readonly<{ size?: 'sm' | 'md' | 'lg' }>) {
   const dims = { sm: 'size-7', md: 'size-9', lg: 'size-12' }[size];
   const iconSize = { sm: 15, md: 20, lg: 26 }[size];
   const boltSize = { sm: 8, md: 10, lg: 14 }[size];

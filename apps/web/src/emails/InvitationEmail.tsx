@@ -4,7 +4,7 @@ interface InvitationEmailProps {
   acceptUrl: string;
 }
 
-export default function InvitationEmail({ acceptUrl = 'https://example.com/accept-invite?token=xxx' }: InvitationEmailProps) {
+export default function InvitationEmail({ acceptUrl = 'https://example.com/accept-invite?token=xxx' }: Readonly<InvitationEmailProps>) {
   return (
     <Html>
       <Head />
