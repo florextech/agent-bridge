@@ -41,18 +41,48 @@ export default function SessionDetailPage({ params }: Readonly<{ params: Promise
     ? 'http://localhost:3001'
     : globalThis.location.origin.replace(':3000', ':3001');
 
-  const agentPrompt = `You have access to Agent Bridge for notifications.
-Session ID: ${session.id}
-API: ${apiUrl}
+  const agentPrompt = `You have access to Agent Bridge, a notification system that lets you communicate with the user via Telegram and other channels.
 
-When you complete a task, need review, need approval, hit an error, or finish tests, notify me:
+## Configuration
+- API: ${apiUrl}
+- Session: ${session.id}
 
-curl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"TYPE","payload":{"summary":"DESCRIPTION"}}'
+## How to notify
+Send a POST request to notify the user:
 
-Event types: task_started, task_completed, needs_review, needs_approval, error, test_results, message
+curl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
 
-To check if I responded: curl ${apiUrl}/agent-sessions/${session.id}/responses
-After reading: curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read`;
+## Event types (use the right one for each situation)
+- task_started — When you begin working on a task
+- task_completed — When you finish a task successfully
+- needs_review — When code needs the user to review it
+- needs_approval — When you need permission before proceeding
+- error — When you encounter an error you can't resolve
+- test_results — When tests finish running
+- message — For general messages or questions
+
+## When to notify
+ALWAYS notify the user when:
+1. You start a significant task
+2. You complete a task
+3. You need input, review, or approval
+4. You encounter an error that blocks progress
+5. Tests pass or fail
+6. You have a question
+
+## Checking for responses
+The user may respond via Telegram. Check periodically:
+
+curl ${apiUrl}/agent-sessions/${session.id}/responses
+
+If there are unread responses, read them and act accordingly. After reading:
+
+curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
+
+## Important
+- Be proactive with notifications — the user relies on them
+- Include clear, concise summaries in the payload
+- Check for responses before asking the same question again`;
 
   const mcpConfig = JSON.stringify({
     mcpServers: {

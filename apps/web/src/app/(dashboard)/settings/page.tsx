@@ -169,7 +169,7 @@ function SessionsTab({ botToken }: { botToken: string }) {
 
   const apiUrl = typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : 'http://localhost:3001';
 
-  const agentPrompt = session ? `You have access to Agent Bridge for notifications.\nSession ID: ${session.id}\nAPI: ${apiUrl}\n\nNotify me with:\ncurl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"TYPE","payload":{"summary":"DESCRIPTION"}}'\n\nEvent types: task_started, task_completed, needs_review, needs_approval, error, test_results, message\n\nCheck responses: curl ${apiUrl}/agent-sessions/${session.id}/responses\nMark read: curl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read` : '';
+  const agentPrompt = session ? `You have access to Agent Bridge, a notification system that lets you communicate with the user via Telegram and other channels.\n\n## Configuration\n- API: ${apiUrl}\n- Session: ${session.id}\n\n## How to notify\ncurl -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'\n\n## Event types\n- task_started — When you begin working\n- task_completed — When you finish a task\n- needs_review — When code needs review\n- needs_approval — When you need permission\n- error — When you encounter an error\n- test_results — When tests finish\n- message — General messages\n\n## Check responses\ncurl ${apiUrl}/agent-sessions/${session.id}/responses\ncurl -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read` : '';
 
   return (
     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
