@@ -63,7 +63,7 @@ export function TeamTab() {
           </div>
           <div className="flex flex-col gap-1">
             <Label htmlFor="inviteRole" className="text-xs">{t('settings.role')}</Label>
-            <select id="inviteRole" value={state.inviteRole} onChange={(e) => dispatch({ type: 'SET_INVITE_ROLE', payload: e.target.value })} className="px-3 py-2 rounded-lg bg-(--surface-muted) border border-(--border) text-sm text-(--foreground)">
+            <select id="inviteRole" aria-label={t('settings.role')} value={state.inviteRole} onChange={(e) => dispatch({ type: 'SET_INVITE_ROLE', payload: e.target.value })} className="px-3 py-2 rounded-lg bg-(--surface-muted) border border-(--border) text-sm text-(--foreground)">
               <option value="member">{t('settings.member')}</option>
               <option value="admin">{t('settings.admin')}</option>
             </select>
@@ -94,7 +94,7 @@ export function TeamTab() {
                   {u.role === 'admin' && <Shield size={10} weight="bold" className="mr-0.5" />}
                   {u.role}
                 </Badge>
-                <button onClick={() => deleteMutation.mutate(u.id)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--danger) transition-colors">
+                <button onClick={() => deleteMutation.mutate(u.id)} className="p-1.5 rounded hover:bg-(--surface) text-(--muted) hover:text-(--danger) transition-colors" title={t('settings.remove')}>
                   <Trash size={14} />
                 </button>
               </div>
