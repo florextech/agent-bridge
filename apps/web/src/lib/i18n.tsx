@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import en from '@/messages/en.json';
 import es from '@/messages/es.json';
@@ -15,7 +15,7 @@ const I18nContext = createContext<{ t: TFunc; locale: string; toggle: () => void
   toggle: () => {},
 });
 
-export function I18nProvider({ initialLocale, children }: { initialLocale: string; children: ReactNode }) {
+export function I18nProvider({ initialLocale, children }: Readonly<{ initialLocale: string; children: ReactNode }>) {
   const [locale, setLocale] = useState(initialLocale);
 
   const toggle = useCallback(() => {
@@ -31,8 +31,10 @@ export function I18nProvider({ initialLocale, children }: { initialLocale: strin
     return messages[locale]?.[ns!]?.[k] ?? key;
   }, [locale]);
 
+  const value = useMemo(() => ({ t, locale, toggle }), [t, locale, toggle]);
+
   return (
-    <I18nContext.Provider value={{ t, locale, toggle }}>
+    <I18nContext.Provider value={value}>
       {children}
     </I18nContext.Provider>
   );
