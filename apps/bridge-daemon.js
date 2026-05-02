@@ -3,28 +3,25 @@
 /**
  * Agent Bridge Daemon
  *
- * Background process that bridges Telegram with any CLI agent.
- * Listens for messages and can re-open the agent when the user sends instructions.
+ * Runs BETWEEN agent sessions. Listens for Telegram messages and
+ * opens a new agent session when the user sends instructions.
  *
- * Works with: Kiro, Codex, Claude, Gemini, Aider, or any CLI tool.
+ * Flow:
+ *   1. You close your agent (kiro, codex, etc.)
+ *   2. Daemon keeps listening for Telegram
+ *   3. You send a message via Telegram
+ *   4. Daemon opens a new agent session
+ *   5. Agent runs until it exits
+ *   6. Back to step 2
  *
  * Usage:
  *   node apps/bridge-daemon.js --session <ID> --agent "kiro-cli"
  *   node apps/bridge-daemon.js --session <ID> --agent "codex"
  *   node apps/bridge-daemon.js --session <ID> --agent "claude"
- *   node apps/bridge-daemon.js --session <ID> --agent "aider"
- *   node apps/bridge-daemon.js --session <ID> --agent "gemini"
- *   node apps/bridge-daemon.js --session <ID> --no-reopen   # just log, don't reopen
- *
- * How it works:
- *   1. Polls Telegram responses every 3 seconds
- *   2. While agent is running, prints messages to stdout
- *   3. When agent session ends, keeps listening
- *   4. If user sends a Telegram message, re-opens the agent
- *   5. Repeats forever until Ctrl+C
+ *   node apps/bridge-daemon.js --session <ID> --no-reopen
  */
 
-const { spawn } = require('node:child_process');
+const { spawnSync } = require('node:child_process');
 
 const args = process.argv.slice(2);
 function getArg(name) {
@@ -41,35 +38,26 @@ const autoReopen = !args.includes('--no-reopen');
 if (!sessionId) {
   console.error(`Agent Bridge Daemon
 
-Bridges Telegram with any CLI agent. Keeps listening even when the agent closes.
+Listens for Telegram between agent sessions. Re-opens the agent when you send a message.
 
 Usage:
   node apps/bridge-daemon.js --session <ID> --agent <command>
 
-Agents:
-  --agent "kiro-cli"     Kiro CLI
-  --agent "codex"        OpenAI Codex CLI
-  --agent "claude"       Claude Code CLI
-  --agent "gemini"       Gemini CLI
-  --agent "aider"        Aider
-  --agent "cursor"       Cursor CLI
-  --agent "any-command"  Any CLI tool
+Examples:
+  node apps/bridge-daemon.js --session abc-123 --agent "kiro-cli"
+  node apps/bridge-daemon.js --session abc-123 --agent "codex"
+  node apps/bridge-daemon.js --session abc-123 --agent "claude"
+  node apps/bridge-daemon.js --session abc-123 --no-reopen
 
 Options:
-  --api <url>            API URL (default: http://localhost:3001)
-  --cwd <path>           Working directory (default: current)
-  --no-reopen            Don't auto-reopen agent, just log messages
-
-Example:
-  node apps/bridge-daemon.js --session abc-123 --agent "codex"
-  # Now send messages via Telegram — when codex closes, daemon re-opens it`);
+  --agent <cmd>   Agent command (default: kiro-cli)
+  --api <url>     API URL (default: http://localhost:3001)
+  --cwd <path>    Working directory
+  --no-reopen     Just log messages, don't open agent`);
   process.exit(1);
 }
 
-const log = (msg) => console.log(`[bridge ${new Date().toLocaleTimeString()}] ${msg}`);
-
-let agentRunning = false;
-let reopening = false;
+const log = (msg) => console.log(`\x1b[90m[bridge]\x1b[0m ${msg}`);
 
 async function sendEvent(type, summary) {
   await fetch(`${apiUrl}/agent-events`, {
@@ -79,71 +67,74 @@ async function sendEvent(type, summary) {
   }).catch(() => { /* fire-and-forget */ });
 }
 
-function startAgent() {
-  if (agentRunning) return;
-  agentRunning = true;
-  reopening = false;
+async function getUnread() {
+  try {
+    const res = await fetch(`${apiUrl}/agent-sessions/${sessionId}/responses`);
+    if (!res.ok) return [];
+    const all = await res.json();
+    return all.filter((r) => !r.read);
+  } catch {
+    return [];
+  }
+}
 
-  log(`🚀 Starting: ${agentCmd}`);
+async function markRead() {
+  await fetch(`${apiUrl}/agent-sessions/${sessionId}/mark-read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  }).catch(() => { /* fire-and-forget */ });
+}
+
+function runAgent() {
+  log(`🚀 Opening ${agentCmd}...`);
   const parts = agentCmd.split(' ');
-  const proc = spawn(parts[0], parts.slice(1), {
+  spawnSync(parts[0], parts.slice(1), {
     stdio: 'inherit',
     cwd,
     env: { ...process.env, AGENT_BRIDGE_SESSION: sessionId, AGENT_BRIDGE_API: apiUrl },
   });
-
-  proc.on('close', (code) => {
-    agentRunning = false;
-    log(`⏸️  ${agentCmd} exited (${code}). Listening for Telegram...`);
-    sendEvent('message', `Sesión de ${agentCmd} terminada. Envía un mensaje por Telegram para re-abrirla.`);
-  });
-
-  proc.on('error', (err) => {
-    agentRunning = false;
-    log(`❌ Failed to start ${agentCmd}: ${err.message}`);
-  });
+  log(`⏸️  ${agentCmd} closed.`);
 }
 
-async function checkResponses() {
-  try {
-    const res = await fetch(`${apiUrl}/agent-sessions/${sessionId}/responses`);
-    if (!res.ok) return;
+async function waitForTelegram() {
+  log('📱 Waiting for Telegram message...');
+  await sendEvent('message', `${agentCmd} cerrado. Envía un mensaje por Telegram para re-abrirlo.`);
 
-    const responses = await res.json();
-    const unread = responses.filter((r) => !r.read);
-    if (unread.length === 0) return;
-
-    await fetch(`${apiUrl}/agent-sessions/${sessionId}/mark-read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    for (const r of unread) {
-      log(`📨 ${r.author ?? 'User'}: ${r.content}`);
+  while (true) {
+    const unread = await getUnread();
+    if (unread.length > 0) {
+      await markRead();
+      for (const r of unread) {
+        log(`📨 ${r.author ?? 'User'}: ${r.content}`);
+      }
+      return unread;
     }
-
-    if (!agentRunning && autoReopen && !reopening) {
-      reopening = true;
-      const lastMsg = unread.at(-1)?.content ?? '';
-      log(`🔄 Re-opening ${agentCmd} (triggered by: "${lastMsg}")`);
-      await sendEvent('task_started', `Re-abriendo ${agentCmd} con instrucción: "${lastMsg}"`);
-      startAgent();
-    }
-  } catch {
-    /* silent retry */
+    await new Promise((r) => setTimeout(r, 3000));
   }
 }
 
-log('🌉 Agent Bridge Daemon');
-log(`   Agent:   ${agentCmd}`);
-log(`   Session: ${sessionId}`);
-log(`   API:     ${apiUrl}`);
-log(`   CWD:     ${cwd}`);
-log(`   Reopen:  ${autoReopen ? 'yes' : 'no'}`);
-log('');
+async function main() {
+  log('🌉 Agent Bridge Daemon');
+  log(`   Agent:   ${agentCmd}`);
+  log(`   Session: ${sessionId.slice(0, 8)}...`);
+  log('');
 
-// Start agent immediately
-startAgent();
+  // First run: open agent immediately
+  runAgent();
 
-// Poll for Telegram messages
-setInterval(checkResponses, 3000);
+  if (!autoReopen) {
+    log('Auto-reopen disabled. Exiting.');
+    return;
+  }
+
+  // Loop: wait for Telegram → open agent → repeat
+  while (true) {
+    const messages = await waitForTelegram();
+    const lastMsg = messages.at(-1)?.content ?? '';
+    log(`🔄 Re-opening ${agentCmd} (triggered by: "${lastMsg}")`);
+    await sendEvent('task_started', `Re-abriendo ${agentCmd}: "${lastMsg}"`);
+    runAgent();
+  }
+}
+
+main();
