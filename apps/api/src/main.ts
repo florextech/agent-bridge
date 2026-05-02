@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { WsAdapter } from '@nestjs/platform-ws';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+  app.useWebSocketAdapter(new WsAdapter(app));
 
   const config = new DocumentBuilder()
     .setTitle('Agent Bridge API')
