@@ -1,47 +1,53 @@
-# Agent Bridge Notifications
+# Agent Bridge — Telegram Notifications
 
-Always notify the user via Agent Bridge when working on tasks.
-
-## Configuration
+## Setup
 - API: http://localhost:3001
 - Session: 2fe07c68-81b0-4c83-afb6-a1713e8160e8
 
-## IMPORTANT: Check Telegram first
-At the START of every session, BEFORE doing anything else, check for pending Telegram messages:
+## First thing: Check pending messages
+At the START of every conversation, BEFORE doing anything else, check if the user left instructions via Telegram while you were offline:
 
 ```bash
 curl -s http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e8/responses
 ```
 
-If there are unread responses (read: false), read them and act on them. They are instructions from the user sent while you were offline. After reading:
+If there are responses with `"read": false`, those are pending instructions. Read them, act on them, then mark as read:
 
+```bash
+curl -s -X POST http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e8/mark-read
+```
+
+## When to notify
+Send a notification via Telegram whenever you:
+- Start a significant task → `task_started`
+- Complete a task → `task_completed`
+- Need the user to review code → `needs_review`
+- Need permission to proceed → `needs_approval`
+- Hit a blocking error → `error`
+- Finish running tests → `test_results`
+- Have a question or general update → `message`
+
+## How to notify
+```bash
+curl -s -X POST http://localhost:3001/agent-events \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"2fe07c68-81b0-4c83-afb6-a1713e8160e8","type":"EVENT_TYPE","payload":{"summary":"Clear description of what happened"}}'
+```
+
+## When you need user input
+1. Send a `needs_approval` or `message` notification with your question
+2. Wait and poll for the response:
+```bash
+curl -s http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e8/responses
+```
+3. When you get a response with `"read": false`, act on it
+4. Mark as read after processing:
 ```bash
 curl -s -X POST http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e8/mark-read
 ```
 
 ## Rules
-1. Send `task_started` when beginning any significant task
-2. Send `task_completed` when finishing a task
-3. Send `needs_review` when code needs review
-4. Send `needs_approval` before making breaking changes
-5. Send `error` when encountering blocking errors
-6. Send `test_results` after running tests
-7. Check for user responses before asking repeated questions
-8. When waiting for user input, send a notification and poll for responses
-
-## How to notify
-```bash
-curl -s -X POST http://localhost:3001/agent-events -H "Content-Type: application/json" -d '{"sessionId":"2fe07c68-81b0-4c83-afb6-a1713e8160e8","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
-```
-
-## How to wait for user response
-```bash
-# Send question
-curl -s -X POST http://localhost:3001/agent-events -H "Content-Type: application/json" -d '{"sessionId":"2fe07c68-81b0-4c83-afb6-a1713e8160e8","type":"needs_approval","payload":{"summary":"YOUR QUESTION"}}'
-
-# Poll for response (check every 3 seconds)
-curl -s http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e8/responses
-
-# After reading response
-curl -s -X POST http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e8/mark-read
-```
+- Be proactive — the user relies on these notifications
+- Keep summaries clear and concise
+- Always check for pending messages before asking a question the user may have already answered
+- Include relevant context in notifications (file names, error messages, etc.)
