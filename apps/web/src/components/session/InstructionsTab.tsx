@@ -62,10 +62,10 @@ curl -s ${apiUrl}/agent-sessions/${session.id}/responses
 After reading: curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
 
 ## Rules
-- Be proactive — the user relies on notifications
-- Keep summaries concise (read on phone)
-- Check pending messages before asking something already answered
-- In Telegram mode: NEVER close session until user says to stop`;
+- Be proactive with notifications
+- Keep summaries clear and concise
+- Always check pending messages before asking something the user may have answered
+- In Telegram mode: NEVER close the session, keep polling until the user says to stop`;
 
   const mcpConfig = JSON.stringify({
     mcpServers: {

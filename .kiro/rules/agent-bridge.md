@@ -68,7 +68,10 @@ curl -s http://localhost:3001/agent-sessions/2fe07c68-81b0-4c83-afb6-a1713e8160e
 3. Act on unread responses, then mark as read
 
 ## Rules
-- Be proactive with notifications
-- Keep summaries clear and concise
-- Always check pending messages before asking something the user may have answered
+- ALWAYS keep the user notified — acknowledge every instruction immediately
+- Send task_started BEFORE beginning work, task_completed AFTER finishing
+- When receiving a Telegram message, confirm receipt before processing
+- Keep summaries clear and concise (user reads on phone)
+- Always check pending messages before asking something already answered
 - In Telegram mode: NEVER close the session, keep polling until the user says to stop
+- Never go silent — if a task takes time, send progress updates

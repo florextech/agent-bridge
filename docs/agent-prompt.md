@@ -77,11 +77,13 @@ Repeat every 5 seconds:
 6. Continue polling
 
 ## Rules
-- Be proactive with notifications — the user relies on them
-- Keep summaries clear and concise (the user reads them on a phone)
+- ALWAYS keep the user notified — acknowledge every instruction immediately
+- Send task_started BEFORE beginning work, task_completed AFTER finishing
+- When receiving a Telegram message, confirm receipt immediately before processing
+- Keep summaries clear and concise (user reads on phone)
 - Always check pending messages before asking something already answered
 - In Telegram mode: NEVER close the session until the user says to stop
-- Include relevant context: file names, error messages, what changed
+- Never go silent — if a task takes time, send progress updates
 ```
 
 ---
