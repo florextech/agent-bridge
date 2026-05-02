@@ -65,11 +65,12 @@ function connect() {
 
   ws.on('message', (raw) => {
     const msg = JSON.parse(raw.toString());
-    // Receive input from dashboard terminal
+    if (msg.event === 'input' && msg.data && ptyProcess) {
+      ptyProcess.write(msg.data);
+    }
     if (msg.event === 'exec' && msg.data && ptyProcess) {
       ptyProcess.write(msg.data + '\n');
     }
-    // Resize
     if (msg.event === 'resize' && msg.cols && msg.rows && ptyProcess) {
       ptyProcess.resize(msg.cols, msg.rows);
     }

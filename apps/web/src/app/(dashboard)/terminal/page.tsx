@@ -1,85 +1,95 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Heading, Text } from '@florexlabs/ui';
-import { useI18n } from '@/lib/i18n';
-
-interface TermLine {
-  type: 'input' | 'output' | 'error' | 'system';
-  text: string;
-}
 
 export default function TerminalPage() {
-  const { t } = useI18n();
-  const [lines, setLines] = useState<TermLine[]>([{ type: 'system', text: 'Connecting...' }]);
-  const [input, setInput] = useState('');
+  const termRef = useRef<HTMLDivElement>(null);
   const [connected, setConnected] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
-  const [historyIdx, setHistoryIdx] = useState(-1);
-  const wsRef = useRef<WebSocket | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const addLine = useCallback((line: TermLine) => {
-    setLines((prev) => [...prev.slice(-500), line]);
+  useEffect(() => {
+    if (!termRef.current) return;
+
+    let cleanup: (() => void) | undefined;
+
+    (async () => {
+      const { Terminal } = await import('@xterm/xterm');
+      const { FitAddon } = await import('@xterm/addon-fit');
+      await import('@xterm/xterm/css/xterm.css');
+
+      const term = new Terminal({
+        cursorBlink: true,
+        fontSize: 13,
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        theme: {
+          background: '#0a0c0b',
+          foreground: '#edf6ee',
+          cursor: '#bdf146',
+          selectionBackground: '#bdf14640',
+          black: '#0b0d0c',
+          green: '#bdf146',
+          brightGreen: '#d7ff6d',
+          yellow: '#f59e0b',
+          red: '#ef4444',
+          cyan: '#76b73d',
+          white: '#edf6ee',
+          brightWhite: '#f4ffe9',
+        },
+      });
+
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(termRef.current!);
+      fitAddon.fit();
+
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace('http', 'ws');
+      const ws = new WebSocket(`${apiUrl}/ws/terminal`);
+
+      ws.onopen = () => {
+        setConnected(true);
+        // Send resize
+        ws.send(JSON.stringify({ event: 'resize', cols: term.cols, rows: term.rows }));
+      };
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data as string) as { type: string; data?: string; code?: number };
+        if (msg.type === 'output' && msg.data) {
+          term.write(msg.data);
+        } else if (msg.type === 'exit') {
+          term.write(`\r\n\x1b[90m● exit ${msg.code}\x1b[0m\r\n`);
+        }
+      };
+
+      ws.onclose = () => {
+        setConnected(false);
+        term.write('\r\n\x1b[31m● Disconnected\x1b[0m\r\n');
+      };
+
+      // Send user input to server
+      term.onData((data) => {
+        if (ws.readyState === 1) {
+          ws.send(JSON.stringify({ event: 'input', data }));
+        }
+      });
+
+      // Handle resize
+      const onResize = () => {
+        fitAddon.fit();
+        if (ws.readyState === 1) {
+          ws.send(JSON.stringify({ event: 'resize', cols: term.cols, rows: term.rows }));
+        }
+      };
+      window.addEventListener('resize', onResize);
+
+      cleanup = () => {
+        window.removeEventListener('resize', onResize);
+        ws.close();
+        term.dispose();
+      };
+    })();
+
+    return () => cleanup?.();
   }, []);
-
-  useEffect(() => {
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace('http', 'ws');
-    const ws = new WebSocket(`${apiUrl}/ws/terminal`);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setConnected(true);
-      setLines([{ type: 'system', text: '● Connected to Agent Bridge terminal' }]);
-    };
-
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data as string) as { type: string; data?: string; code?: number };
-      if (msg.type === 'output' && msg.data) {
-        const text = msg.data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-        addLine({ type: 'output', text });
-      } else if (msg.type === 'exit') {
-        addLine({ type: 'system', text: `● Process exited (${msg.code})` });
-      }
-    };
-
-    ws.onclose = () => {
-      setConnected(false);
-      addLine({ type: 'error', text: '● Disconnected' });
-    };
-
-    return () => ws.close();
-  }, [addLine]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [lines]);
-
-  const send = (cmd: string) => {
-    if (!cmd.trim() || !wsRef.current) return;
-    addLine({ type: 'input', text: `$ ${cmd}` });
-    setHistory((prev) => [...prev, cmd]);
-    setHistoryIdx(-1);
-    wsRef.current.send(JSON.stringify({ event: 'exec', data: cmd }));
-    setInput('');
-  };
-
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      send(input);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const newIdx = historyIdx === -1 ? history.length - 1 : Math.max(0, historyIdx - 1);
-      if (history[newIdx]) { setHistoryIdx(newIdx); setInput(history[newIdx]!); }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (historyIdx === -1) return;
-      const newIdx = historyIdx + 1;
-      if (newIdx >= history.length) { setHistoryIdx(-1); setInput(''); }
-      else { setHistoryIdx(newIdx); setInput(history[newIdx]!); }
-    }
-  };
 
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-6rem)]">
@@ -93,37 +103,7 @@ export default function TerminalPage() {
           {connected ? 'Connected' : 'Disconnected'}
         </div>
       </div>
-
-      <div
-        className="flex-1 rounded-xl border border-(--border) bg-[#0a0c0b] p-4 font-mono text-[13px] overflow-y-auto cursor-text"
-        onClick={() => inputRef.current?.focus()}
-      >
-        {lines.map((line, i) => (
-          <div key={i} className={`whitespace-pre-wrap break-all ${
-            line.type === 'input' ? 'text-(--brand-600)' :
-            line.type === 'error' ? 'text-(--danger)' :
-            line.type === 'system' ? 'text-(--muted) text-xs' :
-            'text-(--foreground)'
-          }`}>
-            {line.text}
-          </div>
-        ))}
-
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-(--brand-600) shrink-0">$</span>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKey}
-            className="flex-1 bg-transparent outline-none text-(--foreground) caret-(--brand-600)"
-            autoFocus
-            spellCheck={false}
-            autoComplete="off"
-          />
-        </div>
-        <div ref={bottomRef} />
-      </div>
+      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden" />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { WebSocketGateway, WebSocketServer, SubscribeMessage, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
-import { spawn } from 'child_process';
 import type { Server, WebSocket } from 'ws';
 
 @WebSocketGateway({ path: '/ws/terminal' })
@@ -15,56 +14,45 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   handleConnection(client: WebSocket): void {
     this.browserClients.add(client);
-    const mode = this.agent ? 'remote agent (PTY)' : 'local';
-    client.send(JSON.stringify({ type: 'output', data: `● Connected (${mode})\r\n` }));
+    const mode = this.agent ? 'remote PTY' : 'no agent';
+    client.send(JSON.stringify({ type: 'output', data: `\x1b[90m● Connected (${mode})\x1b[0m\r\n` }));
   }
 
   handleDisconnect(client: WebSocket): void {
     this.browserClients.delete(client);
   }
 
-  @SubscribeMessage('exec')
-  handleExec(client: WebSocket, payload: string): void {
-    const cmd = typeof payload === 'string' ? payload : String(payload);
-    if (!cmd.trim()) return;
-
+  @SubscribeMessage('input')
+  handleInput(_client: WebSocket, payload: string): void {
     if (this.agent && this.agent.readyState === 1) {
-      // Forward to remote agent — it has a real PTY
-      this.agent.send(JSON.stringify({ event: 'exec', data: cmd }));
-      return;
+      this.agent.send(JSON.stringify({ event: 'input', data: payload }));
     }
+  }
 
-    // Fallback: local execution
-    const proc = spawn('sh', ['-c', cmd], {
-      cwd: process.env['TERMINAL_CWD'] || process.cwd(),
-      env: { ...process.env, TERM: 'xterm-256color', FORCE_COLOR: '1' },
-    });
+  @SubscribeMessage('exec')
+  handleExec(_client: WebSocket, payload: string): void {
+    if (this.agent && this.agent.readyState === 1) {
+      this.agent.send(JSON.stringify({ event: 'exec', data: payload }));
+    }
+  }
 
-    proc.stdout.on('data', (data: Buffer) => {
-      client.send(JSON.stringify({ type: 'output', data: data.toString() }));
-    });
-
-    proc.stderr.on('data', (data: Buffer) => {
-      client.send(JSON.stringify({ type: 'output', data: data.toString() }));
-    });
-
-    proc.on('close', (code) => {
-      client.send(JSON.stringify({ type: 'exit', code }));
-    });
+  @SubscribeMessage('resize')
+  handleResize(_client: WebSocket, payload: { cols: number; rows: number }): void {
+    if (this.agent && this.agent.readyState === 1) {
+      this.agent.send(JSON.stringify({ event: 'resize', cols: payload.cols, rows: payload.rows }));
+    }
   }
 
   registerAgent(ws: WebSocket): void {
     this.agent = ws;
     this.logger.log('Remote terminal agent (PTY) registered');
 
-    // Notify browsers
     this.browserClients.forEach((c) => {
-      if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '● Remote agent connected (PTY)\r\n' }));
+      if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '\x1b[32m● Remote agent connected\x1b[0m\r\n' }));
     });
 
     ws.on('message', (raw: Buffer) => {
       const msg = JSON.parse(raw.toString());
-      // Forward agent output to all browser clients
       this.browserClients.forEach((client) => {
         if (client.readyState === 1) client.send(JSON.stringify(msg));
       });
@@ -74,7 +62,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
       this.agent = null;
       this.logger.log('Remote terminal agent disconnected');
       this.browserClients.forEach((c) => {
-        if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '\r\n● Remote agent disconnected\r\n' }));
+        if (c.readyState === 1) c.send(JSON.stringify({ type: 'output', data: '\r\n\x1b[31m● Agent disconnected\x1b[0m\r\n' }));
       });
     });
   }
