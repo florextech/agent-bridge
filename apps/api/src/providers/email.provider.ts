@@ -32,7 +32,7 @@ export class EmailProvider implements MessagingProvider {
       subject: `${icon} ${event.type} — Agent Bridge`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#111;color:#eee;border-radius:12px">
-          <h2 style="margin:0 0 8px">${icon} ${event.type.replace(/_/g, ' ')}</h2>
+          <h2 style="margin:0 0 8px">${icon} ${event.type.replaceAll('_', ' ')}</h2>
           <p style="color:#b8c4ba;margin:0 0 16px">${summary}</p>
           <hr style="border:none;border-top:1px solid #263028;margin:16px 0">
           <p style="font-size:12px;color:#76b73d">Session: ${event.sessionId}</p>

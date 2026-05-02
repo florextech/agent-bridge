@@ -7,7 +7,7 @@ import { TelegramUsersService } from '../telegram/telegram-users.service';
 export class TelegramProvider implements MessagingProvider {
   private readonly logger = new Logger(TelegramProvider.name);
   readonly channelType = ChannelType.Telegram;
-  static setupToken: string | null = null;
+  static setupToken: string | null = null; // eslint-disable-line -- mutable by design (set from TelegramController)
 
   constructor(private readonly users: TelegramUsersService) {}
 
@@ -65,15 +65,10 @@ export class TelegramProvider implements MessagingProvider {
     const lines = [
       `${icon}  *${label}*`,
       '',
+      ...(summary ? [summary, ''] : []),
+      `─────────────────────`,
+      `⏱ ${time}  ·  📎 \`${event.sessionId.slice(0, 8)}\``,
     ];
-
-    if (summary) {
-      lines.push(summary);
-      lines.push('');
-    }
-
-    lines.push(`─────────────────────`);
-    lines.push(`⏱ ${time}  ·  📎 \`${event.sessionId.slice(0, 8)}\``);
 
     return lines.join('\n');
   }
