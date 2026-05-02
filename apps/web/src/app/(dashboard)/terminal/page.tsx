@@ -43,6 +43,8 @@ export default function TerminalPage() {
       term.loadAddon(fitAddon);
       term.open(termRef.current!);
       fitAddon.fit();
+      // Delayed re-fit to get correct container size
+      setTimeout(() => fitAddon.fit(), 100);
 
       const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace('http', 'ws');
       const ws = new WebSocket(`${apiUrl}/ws/terminal`);
@@ -102,7 +104,7 @@ export default function TerminalPage() {
           {connected ? 'Connected' : 'Disconnected'}
         </div>
       </div>
-      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden min-h-0" />
+      <div ref={termRef} className="flex-1 rounded-xl border border-(--border) overflow-hidden min-h-0 p-2 bg-[#0a0c0b]" />
     </div>
   );
 }
