@@ -1,5 +1,5 @@
 {
-  "name": "@florexlabs/agent-bridge-sdk",
+  "name": "@agent-bridge/sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for Agent Bridge — send notifications and check responses from code agents",
   "main": "./dist/index.js",
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/florextech/agent-bridge",
   "dependencies": {
-    "@florexlabs/agent-bridge-core": "0.1.0"
+    "@agent-bridge/core": "workspace:*"
   },
   "engines": {
     "node": ">=20"

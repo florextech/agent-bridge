@@ -1,5 +1,5 @@
 {
-  "name": "@florexlabs/agent-bridge-core",
+  "name": "@agent-bridge/core",
   "version": "0.1.0",
   "description": "Shared types, enums, and interfaces for Agent Bridge",
   "main": "./dist/index.js",
