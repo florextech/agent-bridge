@@ -26,20 +26,30 @@ export function InstructionsTab({ session }: Readonly<{ session: Session }>) {
 - API: ${apiUrl}
 - Session: ${session.id}
 
+## MCP tools (preferred method)
+If you have the agent-bridge MCP server configured, use these tools directly:
+- notify — Send notification (type + summary)
+- check_responses — Check for unread messages
+- mark_read — Mark responses as read
+- wait_for_response — Wait until the user responds (blocks until a message arrives, handles polling internally)
+- list_sessions / create_session / delete_session — Session management
+
 ## Step 1: Check pending messages
 At the START of every conversation, check for pending Telegram messages:
-curl -s ${apiUrl}/agent-sessions/${session.id}/responses
-If there are unread responses ("read": false), act on them, then mark as read:
-curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
+Use MCP tool: check_responses
+Or: curl -s ${apiUrl}/agent-sessions/${session.id}/responses
+If there are unread responses, act on them, then mark as read.
 
 ## Step 2: Ask communication preference
 Ask: "Do you want to communicate here (terminal) or via Telegram?"
 
-### Terminal mode: work normally, send Telegram notifications for important events.
-### Telegram mode: enter polling loop, process each message as instruction, NEVER end session until user says "done".
-
-## How to notify
-curl -s -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
+### Terminal mode: work normally, send notifications for important events.
+### Telegram mode:
+1. Send "Telegram mode active" via notify tool
+2. Use wait_for_response to wait for instructions (this blocks until the user sends a message)
+3. Process the instruction, send results via notify
+4. Call wait_for_response again for the next instruction
+5. Repeat until the user says "done" or "back to terminal"
 
 ## Event types
 - task_started — Beginning a task
@@ -50,22 +60,16 @@ curl -s -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{
 - test_results — Tests finished
 - message — General message/question
 
-## When to notify (ALWAYS)
-1. Starting a significant task
-2. Completing a task
-3. Needing input, review, or approval
-4. Encountering a blocking error
-5. Tests passing or failing
-
-## Checking for responses
-curl -s ${apiUrl}/agent-sessions/${session.id}/responses
-After reading: curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
+## curl fallback (if MCP unavailable)
+Notify: curl -s -X POST ${apiUrl}/agent-events -H "Content-Type: application/json" -d '{"sessionId":"${session.id}","type":"EVENT_TYPE","payload":{"summary":"DESCRIPTION"}}'
+Check: curl -s ${apiUrl}/agent-sessions/${session.id}/responses
+Mark read: curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
 
 ## Rules
 - Be proactive with notifications
-- Keep summaries clear and concise
+- Keep summaries clear and concise (user reads on phone)
 - Always check pending messages before asking something the user may have answered
-- In Telegram mode: NEVER close the session, keep polling until the user says to stop`;
+- In Telegram mode: use wait_for_response instead of manual polling loops`;
 
   const mcpConfig = JSON.stringify({
     mcpServers: {
@@ -98,7 +102,7 @@ After reading: curl -s -X POST ${apiUrl}/agent-sessions/${session.id}/mark-read
           <InlineCopyBtn active={copiedKey === 'mcp'} onClick={() => copy('mcp', mcpConfig)} />
         </div>
         <div className="p-3 rounded-lg bg-(--surface-muted) border border-(--border)">
-          <Text variant="muted" size="xs">Available MCP tools: <code className="text-(--foreground)">notify</code>, <code className="text-(--foreground)">check_responses</code>, <code className="text-(--foreground)">mark_read</code>, <code className="text-(--foreground)">list_sessions</code></Text>
+          <Text variant="muted" size="xs">Available MCP tools: <code className="text-(--foreground)">notify</code>, <code className="text-(--foreground)">check_responses</code>, <code className="text-(--foreground)">mark_read</code>, <code className="text-(--foreground)">wait_for_response</code>, <code className="text-(--foreground)">list_sessions</code>, <code className="text-(--foreground)">create_session</code>, <code className="text-(--foreground)">delete_session</code></Text>
         </div>
       </div>
     </div>

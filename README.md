@@ -204,6 +204,7 @@ Optional: `TELEGRAM_BOT_TOKEN`, `RESEND_API_KEY`, `NEXT_PUBLIC_API_URL`, `TERMIN
 | `notify` | Send notification to user |
 | `check_responses` | Check for Telegram responses |
 | `mark_read` | Mark responses as read |
+| `wait_for_response` | Wait until user responds (blocks, handles polling internally) |
 | `list_sessions` | List all sessions |
 | `create_session` | Create a new session |
 | `delete_session` | Delete a session |

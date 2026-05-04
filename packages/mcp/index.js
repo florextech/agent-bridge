@@ -132,6 +132,37 @@ server.tool(
   }
 );
 
+// Tool: Wait for response (blocking poll)
+server.tool(
+  "wait_for_response",
+  "Wait until the user sends a response via Telegram. Polls every 5 seconds and returns when a new message arrives. Use this instead of manual polling loops.",
+  {
+    sessionId: z.string().optional().describe("Session ID (uses AGENT_BRIDGE_SESSION env if not provided)"),
+    timeoutSeconds: z.number().optional().default(300).describe("Max seconds to wait (default 300 = 5 min)"),
+  },
+  async ({ sessionId, timeoutSeconds }) => {
+    const sid = sessionId || SESSION_ID;
+    if (!sid) return { content: [{ type: "text", text: "Error: No session ID." }] };
+
+    const deadline = Date.now() + (timeoutSeconds ?? 300) * 1000;
+
+    while (Date.now() < deadline) {
+      const responses = await api(`/agent-sessions/${sid}/responses`);
+      const unread = responses.filter((r) => !r.read);
+
+      if (unread.length > 0) {
+        const lines = unread.map((r) => `[${r.author}]: ${r.content}`).join("\n");
+        await api(`/agent-sessions/${sid}/mark-read`, { method: "POST" });
+        return { content: [{ type: "text", text: `${unread.length} message(s) received:\n${lines}` }] };
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+
+    return { content: [{ type: "text", text: "Timeout: no response received within the time limit." }] };
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

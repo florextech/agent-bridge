@@ -123,4 +123,4 @@ Instead of curl, agents can use the MCP server for native tool access:
 }
 ```
 
-MCP tools: `notify`, `check_responses`, `mark_read`, `list_sessions`
+MCP tools: `notify`, `check_responses`, `mark_read`, `wait_for_response`, `list_sessions`, `create_session`, `delete_session`

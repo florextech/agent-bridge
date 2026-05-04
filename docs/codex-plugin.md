@@ -2,6 +2,14 @@
 
 This guide explains how to install and use the local `agent-bridge` plugin with Codex.
 
+## How it works
+
+The plugin provides two integration methods:
+
+1. **MCP tools (recommended)** — Native tool integration. Codex calls `notify`, `check_responses`, `wait_for_response`, etc. directly. The `wait_for_response` tool handles polling internally and blocks until the user responds, solving the bidirectional communication problem.
+
+2. **Bash scripts (fallback)** — Shell commands via `agent_setup.sh` for environments without MCP support.
+
 ## 1. Create plugin scaffold (repo-local)
 
 From repo root:
@@ -139,3 +147,27 @@ Security note:
   - Ensure these files exist if you want custom branding:
     - `~/plugins/agent-bridge/assets/icon.png`
     - `~/plugins/agent-bridge/assets/logo.png`
+
+## 6. MCP integration
+
+The plugin's `.mcp.json` configures the agent-bridge MCP server automatically. When Codex loads the plugin, it gets access to these tools:
+
+| Tool | Description |
+|---|---|
+| `notify` | Send notification (task_started, task_completed, etc.) |
+| `check_responses` | Check for unread Telegram messages |
+| `mark_read` | Mark responses as read |
+| `wait_for_response` | Block until user responds (handles polling internally, 5min timeout) |
+| `list_sessions` | List all sessions |
+| `create_session` | Create a new session |
+| `delete_session` | Delete a session |
+
+### Telegram mode with MCP
+
+Instead of manual polling loops, the agent uses `wait_for_response` which:
+1. Polls the API every 5 seconds internally
+2. Blocks until a new message arrives
+3. Returns the message content and auto-marks as read
+4. Times out after 5 minutes (configurable via `timeoutSeconds`)
+
+This solves the problem of agents not maintaining persistent polling loops.
